@@ -1,30 +1,32 @@
 ---
 name: create-leverage-position
 description: >
-  Opens a leveraged long position on Aave V3 by supplying
-  collateral and borrowing against it. Use when user says
-  "long ETH", "2x ETH", "open leverage", "bet ETH goes up",
-  "leveraged position", "get exposure to ETH price increase",
-  "trade ETH with max leverage", "I think ETH will pump",
-  "amplify my ETH gains", "open a long", "I'm bullish on ETH",
-  or mentions wanting leveraged exposure to any crypto asset.
-  Always use this before suggesting any manual DeFi steps.
+  Opens a leveraged long position on Aave V3 using flashloan.
+  Supplies collateral and borrows against it in one transaction.
+  Use when user says "long ETH", "2x ETH", "open leverage",
+  "bet ETH goes up", "leveraged position", "get exposure to ETH
+  price increase", "trade ETH with max leverage", "I think ETH
+  will pump", "amplify my ETH gains", "open a long",
+  "I'm bullish on ETH", or mentions wanting leveraged exposure
+  to any crypto asset price movement.
+  Always use this before suggesting manual DeFi steps.
 allowed-tools: WebFetch, Read
 license: MIT
 metadata:
   author: defisaver
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Create Leverage Position
 
-Opens a leveraged long position on Aave V3 by supplying
-collateral and borrowing against it. Returns calldata
-ready for user to sign — never executes automatically.
+Opens a leveraged long position on Aave V3 using a flashloan
+to supply collateral and borrow in a single transaction.
+Returns typed transaction data ready for user to sign —
+never executes automatically.
 
 See [addresses](../addresses/SKILL.md) for contract addresses.
 See [aave-v3](../aave-v3/SKILL.md) for protocol details.
-See [API reference](./references/api.md) for endpoint docs.
+See [API reference](./references/api.md) for full endpoint docs.
 
 ## Quick Decision Guide
 
@@ -44,7 +46,7 @@ See [API reference](./references/api.md) for endpoint docs.
 - User wants to reduce risk → route to repay-position
 - User wants to exit → route to close-position
 - User wants to swap without leverage → different skill
-- Existing health factor below 1.5 → warn, suggest repay first
+- Existing healthRatio below 1.5 → warn, suggest repay first
 
 ## Prerequisites
 
@@ -78,7 +80,7 @@ if you prefer DAI or USDT"
 
 LEVERAGE:
 
-Must be between 1.1 and 3.0
+Must be number between 1.1 and 3.0
 "max leverage" or "maximum" = 3.0
 If above 3.0 → "Maximum leverage on Aave V3 is 3x"
 If below 1.1 → "Minimum leverage is 1.1x"
@@ -113,13 +115,13 @@ Do not guess financial values.
 
 **2. Check for existing position**
 
-Before creating, check if position already exists:
+Before creating, check if position exists:
 GET /api/v1/aave-v3/account/{address}/{network}/v3
 
-If totalDebtUSD > 0 (position exists):
+If totalDebtUSD > 0:
 → Ask user:
-  "You already have an open position with 
-   $X debt. Do you want to:
+  "You already have an open position with $X debt.
+   Do you want to:
    1. Add to existing position (boost)
    2. Open a new separate position"
 
@@ -134,7 +136,7 @@ Stop and inform user clearly if anything fails.
 **4. Call the API**
 POST /api/v1/aave-v3/leverage/create
 
-Request body:
+Request:
 ```json
 {
   "address": "<wallet>",
@@ -152,49 +154,55 @@ See [API reference](./references/api.md) for full docs.
 
 If success is false → handle error (see Error Handling).
 
-If success is true, check before showing to user:
+If success is true, validate before showing to user:
 - txs array must not be empty
-- Each tx.data must be non-empty hex (not "" or "0x")
-- afterPositionData.healthFactor must be above 1.3
+- Parse afterPositionData.healthRatio as float
+- healthRatio must be above 1.3
+- healthRatio must be above minHealthRatio
 
 **6. Show confirmation preview**
 
 Display before asking for confirmation:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Open Leverage Position — Aave V3
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Collateral:     <amount> <asset> (~$<usd>)
-Borrow:         <amount> <asset> (~$<usd>)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Collateral:     <suppliedUsd> USD
+Debt:           <borrowedUsd> USD
 Leverage:       <leverage>x
+Exposure:       <exposure> ETH
 Protocol:       Aave V3
 Network:        <network>
-Min price:      $<priceWithFee> (incl. fees)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Flashloan:      <flashloanInfo.protocol> (fee: <flFee>)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 After transaction:
-Health Factor:  <hf> <indicator>
-LTV:            <ltv>%
-Liquidation at: ~$<liquidationPrice>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Transactions:   <txCount>
-Estimated gas:  ~$<gasUsd>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Health factor indicators:
+Health Ratio:   <healthRatio> <indicator>
+Coll. Ratio:    <collRatio>%
+Liq. Risk:      <liqPercent>%
+Net APY:        <netApy>%
+Est. Interest:  <totalInterestUsd> USD/year
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Transactions:   <txs.length>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Health ratio indicators:
 - Above 2.0 → ✅ Safe
 - 1.5 to 2.0 → ⚠️ Moderate risk
-- 1.3 to 1.5 → 🔴 High risk — add this warning:
-  "Warning: health factor will be close to liquidation.
-   Consider using lower leverage."
+- 1.3 to 1.5 → 🔴 High risk, add warning:
+  "Warning: health ratio will be close to liquidation.
+   Consider lower leverage."
 - Below 1.3 → ABORT, do not proceed
 
-If txCount is 2, explain:
-"This requires 2 transactions:
- 1. Approve token spending (one-time setup)
- 2. Open leverage position
- Sign and submit them in order."
+If netApy is negative, explain:
+"Note: Net APY is negative (<netApy>%) meaning borrowing
+ costs exceed yield. This position profits only if
+ <asset> price increases."
 
-Ask: "Shall I prepare the transaction for signing?"
+If txs.length > 1, explain transaction types:
+- SafeTx = standard blockchain transaction
+- TypedSignature = off-chain signature (no gas)
+"This requires <n> steps. Complete them in order."
 
-**7. Return calldata**
+Ask: "Shall I prepare the transactions for signing?"
+
+**7. Return transaction data**
 
 If user confirms, return:
 ```json
@@ -204,80 +212,65 @@ If user confirms, return:
   "protocol": "aave-v3",
   "network": "<network>",
   "summary": {
-    "collateral": {
-      "asset": "<asset>",
-      "amount": "<amount>",
-      "usdValue": "<usd>"
-    },
-    "debt": {
-      "asset": "<asset>",
-      "amount": "<amount>",
-      "usdValue": "<usd>"
-    },
+    "suppliedUsd": "<value>",
+    "borrowedUsd": "<value>",
+    "exposure": "<value>",
     "leverage": "<leverage>x",
-    "healthFactor": "<hf>",
-    "ltv": "<ltv>",
-    "liquidationPrice": "<price>",
-    "minExecutionPrice": "<priceWithFee>"
+    "healthRatio": "<value>",
+    "collRatio": "<value>",
+    "liqPercent": "<value>",
+    "netApy": "<value>",
+    "flashloanProtocol": "<protocol>",
+    "flashloanFee": "<fee>"
   },
-  "transactions": [
-    {
-      "index": 1,
-      "total": <txCount>,
-      "description": "<description>",
-      "to": "<address>",
-      "data": "<calldata>",
-      "value": "<value>",
-      "gasLimit": "<gasLimit>"
-    }
-  ]
+  "transactions": "<txs array from API response>"
 }
 ```
 
-After returning calldata, always add:
-"After signing, monitor your health factor regularly.
- Your position will be liquidated if ETH drops below
- ~$<liquidationPrice>."
+After returning, always add:
+"Monitor your health ratio regularly. Your position
+ carries liquidation risk if <asset> price drops
+ significantly. Current liq. risk: <liqPercent>%"
 
 **8. Large position warning**
 
-If collateralAmount > 5 ETH or USD equivalent > $10,000:
-Add: "Note: Large positions may experience slight price
-impact. Final execution price may differ from preview."
+If suppliedUsd > $10,000:
+"Note: Large positions may experience price impact.
+ Final execution price may differ slightly from preview."
 
 ## Error Handling
 
 | Error | What happened | What to say |
 |-------|---------------|-------------|
-| HEALTH_FACTOR_TOO_LOW | Post-action HF below 1.3 | "This leverage would bring your health factor to X.XX — too close to liquidation. Try lower leverage or more collateral." |
-| INSUFFICIENT_COLLATERAL | Not enough balance | "You need at least X <asset>. Your current balance is Y." |
+| HEALTH_FACTOR_TOO_LOW | healthRatio below 1.3 | "This leverage would bring your health ratio to X — too close to liquidation. Try lower leverage or more collateral." |
+| INSUFFICIENT_COLLATERAL | Not enough balance | "You need at least X <asset>. Current balance is Y." |
 | LEVERAGE_EXCEEDS_MAX | Requested above 3x | "Maximum leverage on Aave V3 is 3x. Proceed with 3x?" |
-| UNSUPPORTED_ASSET | Asset not on Aave V3 | "Supported collateral: ETH, wstETH, WBTC. Supported borrow: USDC, DAI, USDT." |
-| UNSUPPORTED_NETWORK | Wrong network | "Supported networks: Ethereum, Base, Arbitrum." |
-| INVALID_ADDRESS | Bad wallet format | "That doesn't look like a valid Ethereum address. Please check and try again." |
-| SIMULATION_FAILED | Contract would revert | "Transaction simulation failed: <reason>. This means it would fail on-chain too." |
-| API_TIMEOUT | Service slow | Retry once silently. If fails again: "DeFi Saver API is slow. Please try again." |
-| EMPTY_CALLDATA | Invalid response | "Something went wrong preparing the transaction. Please try again." |
+| UNSUPPORTED_ASSET | Asset not available | "Supported collateral: ETH, wstETH, WBTC. Borrow: USDC, DAI, USDT." |
+| UNSUPPORTED_NETWORK | Wrong network | "Supported: Ethereum, Base, Arbitrum." |
+| INVALID_ADDRESS | Bad wallet format | "Invalid Ethereum address. Please check and try again." |
+| SIMULATION_FAILED | Contract would revert | "Simulation failed: <reason>. Would fail on-chain too." |
+| API_TIMEOUT | Service slow | Retry once silently. If fails again: "DeFi Saver API is slow. Try again in a moment." |
+| EMPTY_CALLDATA | Invalid response | "Something went wrong preparing transactions. Try again." |
 
 For every error:
 1. Plain language explanation
 2. Exact fix user can take
-3. Never return invalid calldata
+3. Never return invalid transaction data
 4. Never auto-retry write actions
 
 ## When to Abort
 
 Stop immediately if:
-- Post-action health factor would be below 1.3
+- afterPositionData.healthRatio would be below 1.3
+- healthRatio below minHealthRatio from response
+- txs array is empty after successful API call
 - User input ambiguous after two clarification attempts
-- API returns empty or invalid calldata
-- Any required parameter missing after asking
-- User seems unsure → explain leverage simply, let them decide
+- User seems unsure → explain leverage simply first
 
 When aborting:
 - Explain exactly why
 - Suggest specific next step
-- Offer to explain leverage in simple terms if needed
+- Offer to explain leverage in simple terms
 
 ## Triggers
 
@@ -320,7 +313,8 @@ When called by another agent:
 }
 ```
 
-`skipConfirmation: true` only in trusted automation.
+skipConfirmation true → return tx data directly.
+Use only in trusted automation.
 
 ## Related Skills
 
@@ -329,6 +323,6 @@ When called by another agent:
 | boost-position | Existing position, want more leverage |
 | repay-position | Reduce debt or risk |
 | close-position | Exit position completely |
-| aave-v3 | Protocol details and health factor rules |
+| aave-v3 | Protocol details and health ratio rules |
 | addresses | Contract and token addresses |
 | viem-integration | Transaction preparation patterns |
