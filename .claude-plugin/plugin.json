@@ -1,0 +1,21 @@
+{
+  "name": "defisaver-ai",
+  "description": "DeFi leverage management. Open, boost, repay, and close leveraged positions using natural language.",
+  "version": "1.0.0",
+  "author": {
+    "name": "DeFi Saver",
+    "url": "https://defisaver.com"
+  },
+  "homepage": "https://github.com/defisaver/defisaver-ai",
+  "repository": "https://github.com/defisaver/defisaver-ai",
+  "license": "MIT",
+  "keywords": ["defi", "aave", "leverage", "ethereum", "web3"],
+  "skills": [
+    "./skills/viem-integration/",
+    "./skills/defi-saver/",
+    "./skills/create-leverage-position/",
+    "./skills/boost-position/",
+    "./skills/repay-position/",
+    "./skills/close-position/"
+  ]
+}
