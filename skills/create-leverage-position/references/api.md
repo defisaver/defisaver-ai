@@ -1,134 +1,202 @@
 # Create Leverage Position — API Reference
 
-## Endpoint
-## Request
+## Main Endpoint
+
+POST /api/v1/aave-v3/leveraged-position/:address/:network/:version
+
+### URL Parameters
+
+| Param | Description | Example |
+|-------|-------------|---------|
+| address | Checksummed wallet address | `0x742d35...` |
+| network | Chain ID as integer | `8453` |
+| version | AaveVersions enum value | `AaveV3` |
+
+### Network to Version Mapping
+
+| Network | Chain ID | version param |
+|---------|----------|---------------|
+| Ethereum | 1 | AaveV3Ethereum |
+| Optimism | 10 | AaveV3 |
+| Base | 8453 | AaveV3 |
+| Arbitrum | 42161 | AaveV3 |
+| Linea | 59144 | AaveV3 |
+
+### Request Body
+
 ```json
 {
-  "address": "0x...",
-  "network": "ethereum",
-  "collateralAsset": "ETH",
-  "collateralAmount": "1.0",
-  "borrowAsset": "USDC",
-  "leverage": 2.0
+  "collAsset": "ETH",
+  "collAmount": "1.0",
+  "debtAsset": "USDC",
+  "exposure": "2"
 }
 ```
-
-### Request Fields
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| address | string | yes | User wallet address (0x...) |
-| network | string | yes | ethereum, base, arbitrum |
-| collateralAsset | string | yes | Asset to use as collateral |
-| collateralAmount | string | yes | Amount as decimal string |
-| borrowAsset | string | yes | Asset to borrow |
-| leverage | number | yes | Multiplier between 1.1 and 3.0 |
-
-### Supported Assets
-
-| Asset | Role | Decimals |
-|-------|------|----------|
-| ETH | collateral | 18 |
-| wstETH | collateral | 18 |
-| WBTC | collateral | 8 |
-| USDC | borrow | 6 |
-| DAI | borrow | 18 |
-| USDT | borrow | 6 |
-
-### Supported Networks
-
-| Network | Value |
-|---------|-------|
-| Ethereum Mainnet | ethereum |
-| Base | base |
-| Arbitrum | arbitrum |
-
-## Response
-```json
-{
-  "success": true,
-  "address": "0x...",
-  "network": "ethereum",
-  "price": "1850.25",
-  "afterPositionData": {
-    "healthFactor": "1.82",
-    "ltv": "0.65",
-    "totalCollateralUSD": "3200.00",
-    "totalDebtUSD": "1600.00",
-    "availableBorrowsUSD": "480.00",
-    "liquidationThreshold": "0.80",
-    "liquidationPriceUSD": "1067.00"
-  },
-  "usedAssetsChanged": {
-    "collateral": {
-      "asset": "ETH",
-      "amount": "1.0",
-      "amountUSD": "3200.00"
-    },
-    "debt": {
-      "asset": "USDC",
-      "amount": "1600.0",
-      "amountUSD": "1600.00"
-    }
-  },
-  "txs": [
-    {
-      "to": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
-      "data": "0x...",
-      "value": "0x0",
-      "gasLimit": "350000",
-      "description": "Supply ETH and borrow USDC on Aave V3"
-    }
-  ]
-}
-```
-
-### Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| success | boolean | true if calldata prepared successfully |
-| address | string | User wallet address |
-| network | string | Network used |
-| price | string | Minimum price with fee (USD) |
-| afterPositionData | object | Estimated position state after tx |
-| afterPositionData.healthFactor | string | Estimated health factor (> 1.3 required) |
-| afterPositionData.ltv | string | Loan to value ratio (0.0 - 1.0) |
-| afterPositionData.totalCollateralUSD | string | Total collateral in USD |
-| afterPositionData.totalDebtUSD | string | Total debt in USD |
-| afterPositionData.availableBorrowsUSD | string | Remaining borrow capacity in USD |
-| afterPositionData.liquidationThreshold | string | LTV at which position gets liquidated |
-| afterPositionData.liquidationPriceUSD | string | Asset price that triggers liquidation |
-| usedAssetsChanged | object | Collateral and debt assets after tx |
-| txs | array | Transaction(s) ready for user to sign |
-| txs[].to | string | Contract address |
-| txs[].data | string | Encoded calldata |
-| txs[].value | string | ETH value in hex |
-| txs[].gasLimit | string | Estimated gas limit |
-| txs[].description | string | Human readable description |
+| collAsset | string | Collateral asset symbol (e.g. "ETH") |
+| collAmount | string | Collateral amount as decimal string |
+| debtAsset | string | Borrow asset symbol (e.g. "USDC") |
+| exposure | string | Leverage multiplier as string (e.g. "2" for 2x) |
+
+Note: `exposure` is the leverage multiplier — "2" means 2x leverage.
+`collAmount` and `exposure` must be strings that parse to valid numbers.
+
+### Validation Rules (from API)
+
+- address: string, exactly 42 characters
+- network: integer, min 1
+- version: must be valid AaveVersions enum value
+- collAsset: string, not empty
+- collAmount: string, parses to positive number
+- debtAsset: string, not empty
+- exposure: string, parses to number > 1
+
+## Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "afterPositionData": {
+      "suppliedUsd": "5517.55",
+      "suppliedCollateralUsd": "5517.55",
+      "borrowLimitUsd": "4440.79",
+      "liquidationLimitUsd": "4578.81",
+      "borrowedUsd": "3302.73",
+      "leftToBorrowUsd": "1138.06",
+      "ratio": "134.46",
+      "collRatio": "167.06",
+      "liqRatio": "0.9698",
+      "liqPercent": "96.98",
+      "healthRatio": "1.3863",
+      "minHealthRatio": "1.031",
+      "liquidationPrice": "",
+      "netApy": "-0.9048",
+      "incentiveUsd": "0",
+      "totalInterestUsd": "-20.04",
+      "exposure": "2.49"
+    },
+    "usedAssetsChanged": {
+      "ETH": {
+        "symbol": "ETH",
+        "supplied": "2.503",
+        "suppliedUsd": "5502.43",
+        "isSupplied": true,
+        "collateral": true,
+        "borrowed": "0.00253",
+        "borrowedUsd": "5.56",
+        "isBorrowed": true,
+        "borrowRate": "2.33",
+        "supplyRate": "1.78",
+        "interestMode": "2"
+      },
+      "USDC": {
+        "symbol": "USDC",
+        "borrowed": "3297.34",
+        "borrowedUsd": "3297.16",
+        "isBorrowed": true,
+        "borrowRate": "3.59",
+        "supplyRate": "2.61"
+      }
+    },
+    "success": true,
+    "price": "0.000455...",
+    "address": "0x...",
+    "network": 8453,
+    "flashloanInfo": {
+      "protocol": "morpho",
+      "feeMultiplier": "1",
+      "flFee": "0"
+    },
+    "txs": [
+      { "type": "SafeTx", "to": "0x...", "data": "0x...", "value": "0x0" },
+      { "type": "TypedSignature", "domain": {}, "types": {}, "message": {} }
+    ]
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00.000Z",
+    "requestId": "uuid"
+  }
+}
+```
+
+### afterPositionData Fields
+
+| Field | Description | How to use |
+|-------|-------------|------------|
+| suppliedUsd | Total collateral value in USD | Display to user |
+| borrowedUsd | Total debt value in USD | Display to user |
+| healthRatio | Health factor (e.g. "1.3863") | CRITICAL — parse as float, check > 1.3 |
+| minHealthRatio | Minimum safe health ratio | Compare against healthRatio |
+| collRatio | Collateralization ratio % | Display as risk indicator |
+| liqPercent | Liquidation risk % | Higher = more risk |
+| netApy | Net APY (can be negative) | Show to user — negative means costs > yield |
+| totalInterestUsd | Estimated interest cost per year | Show to user |
+| exposure | Total asset exposure | Display to user |
+| liquidationPrice | Price at liquidation (may be empty string) | Show if not empty |
+
+### healthRatio Rules
+
+| Value | Status | Action |
+|-------|--------|--------|
+| Above 2.0 | ✅ Safe | Proceed |
+| 1.5 to 2.0 | ⚠️ Moderate | Warn user |
+| 1.3 to 1.5 | 🔴 High risk | Strong warning, require confirmation |
+| Below 1.3 | ☠️ Critical | ABORT — do not proceed |
 
 ### txs Array
 
-May contain multiple transactions. Common cases:
+Sign and submit in order.
 
-| Count | Reason |
-|-------|--------|
-| 1 tx | ETH collateral, no approval needed |
-| 2 txs | ERC20 collateral, approval + main tx |
+| Type | Description | Gas required |
+|------|-------------|--------------|
+| SafeTx | Standard blockchain transaction | Yes |
+| TypedSignature | EIP-712 off-chain signature | No |
 
-Always present ALL transactions to user in order.
-User must sign and submit each one in sequence.
+Order: Always sign and submit in sequence.
+TypedSignature requires no gas — sign only, do not submit as tx.
+
+### flashloanInfo
+
+| Field | Description |
+|-------|-------------|
+| protocol | Flashloan source (morpho, aave, etc.) |
+| feeMultiplier | Fee multiplier |
+| flFee | Fee amount — "0" means free (Morpho) |
+
+## Supporting Endpoints
+
+### Validate Address (before any call)
+GET /api/v1/utils/validate-address/:address
+
+```json
+{ "address": "0x...", "isValid": true, "checksumAddress": "0x742d35..." }
+```
+
+Always call this first. Use `checksumAddress` in all subsequent calls.
+
+### Check Existing Position
+GET /api/v1/aave-v3/account/:address/:network/:version
+
+Use to check if a position already exists before creating a new one.
+Check: `parseFloat(data.borrowedUsd) > 0` → position exists.
+
+### Get Gas Price (for display)
+GET /api/v1/utils/gas-price/:chainId
+
+```json
+{ "chainId": 8453, "chainName": "Base", "gasPrice": "...", "gasPriceFormatted": "0.01 gwei" }
+```
 
 ## Error Responses
+
 ```json
 {
   "success": false,
-  "error": "HEALTH_FACTOR_TOO_LOW",
-  "message": "Estimated health factor 1.21 is below minimum 1.3",
-  "details": {
-    "estimatedHealthFactor": "1.21",
-    "minimumHealthFactor": "1.3"
-  }
+  "error": "ERROR_CODE",
+  "message": "Human readable description"
 }
 ```
 
@@ -136,29 +204,27 @@ User must sign and submit each one in sequence.
 
 | Code | Cause | Agent Action |
 |------|-------|--------------|
-| HEALTH_FACTOR_TOO_LOW | Post-action HF < 1.3 | Suggest lower leverage |
+| HEALTH_FACTOR_TOO_LOW | Post-action healthRatio < 1.3 | Suggest lower leverage |
 | INSUFFICIENT_COLLATERAL | Not enough balance | Show required amount |
 | LEVERAGE_EXCEEDS_MAX | Requested > 3x | Suggest max 3x |
-| UNSUPPORTED_ASSET | Asset not on Aave V3 | List supported assets |
-| UNSUPPORTED_NETWORK | Wrong network | List supported networks |
+| UNSUPPORTED_ASSET | Asset not on protocol | Relay error naturally |
+| UNSUPPORTED_NETWORK | Wrong network | List supported chain IDs |
 | INVALID_ADDRESS | Bad wallet format | Ask to check address |
-| SIMULATION_FAILED | Contract would revert | Explain reason from details |
-| API_TIMEOUT | Service unavailable | Retry once, then inform user |
+| SIMULATION_FAILED | Contract would revert | Explain reason |
+| API_TIMEOUT | Service unavailable | Retry once |
 
-## Validation Rules
+## Validation Before Calling
 
-Before calling this endpoint:
+1. address: use `/api/v1/utils/validate-address/` first
+2. network: must be one of 1, 10, 8453, 42161, 59144
+3. version: use "AaveV3Ethereum" for chainId 1, "AaveV3" for all others
+4. collAmount: positive number as string
+5. exposure: number > 1 as string (maps from UI leverage multiplier)
 
-1. address must match ^0x[a-fA-F0-9]{40}$
-2. leverage must be between 1.1 and 3.0
-3. collateralAmount must be positive number
-4. collateralAsset must be in supported list
-5. borrowAsset must be in supported list
-6. network must be in supported list
+## Validation After Response
 
-Before returning txs to user:
-
-1. success must be true
-2. txs array must not be empty
-3. Each tx.data must be non-empty hex, not "" or "0x"
-4. afterPositionData.healthFactor must be > 1.3
+1. response.success must be true
+2. response.data.txs array must not be empty
+3. response.data.afterPositionData.healthRatio must be > 1.3 (parse as float)
+4. response.data.afterPositionData.healthRatio must be > minHealthRatio
+5. Each SafeTx must have non-empty `data` field

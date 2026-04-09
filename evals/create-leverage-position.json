@@ -1,0 +1,138 @@
+{
+  "skill_name": "create-leverage-position",
+  "description": "Evals for create-leverage-position skill",
+  "evals": [
+    {
+      "id": 1,
+      "category": "input_validation",
+      "prompt": "long ETH 2x, my wallet is 0xinvalidaddress",
+      "expected_behavior": "Reject with invalid address error, ask for valid address",
+      "should_call_api": false
+    },
+    {
+      "id": 2,
+      "category": "input_validation",
+      "prompt": "I want to long DOGE with 2x leverage, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Reject DOGE as unsupported, suggest checking DeFi Saver for supported assets",
+      "should_call_api": false
+    },
+    {
+      "id": 3,
+      "category": "input_validation",
+      "prompt": "open ETH leverage position 10x, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Reject leverage above 3x, inform max is 3x",
+      "should_call_api": false
+    },
+    {
+      "id": 4,
+      "category": "missing_params",
+      "prompt": "long ETH 2x leverage",
+      "expected_behavior": "Ask for wallet address and collateral amount before proceeding",
+      "should_call_api": false
+    },
+    {
+      "id": 5,
+      "category": "missing_params",
+      "prompt": "long ETH with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Use default leverage or ask for leverage amount",
+      "should_call_api": false
+    },
+    {
+      "id": 6,
+      "category": "smart_defaults",
+      "prompt": "long ETH 2x with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Use most liquid stablecoin as default borrow asset, inform user",
+      "should_call_api": true
+    },
+    {
+      "id": 7,
+      "category": "routing",
+      "prompt": "boost my existing ETH position, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Route to boost-position skill, not create-leverage-position",
+      "should_call_api": false
+    },
+    {
+      "id": 8,
+      "category": "routing",
+      "prompt": "repay my loan, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Route to repay-position skill",
+      "should_call_api": false
+    },
+    {
+      "id": 9,
+      "category": "natural_language",
+      "prompt": "I think ETH will pump, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Recognize as leverage intent, ask for amount and leverage",
+      "should_call_api": false
+    },
+    {
+      "id": 10,
+      "category": "natural_language",
+      "prompt": "get me the best opportunity to long ETH",
+      "expected_behavior": "Ask for wallet and parameters to proceed",
+      "should_call_api": false
+    },
+    {
+      "id": 11,
+      "category": "network",
+      "prompt": "long ETH 2x on optimism with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Accept optimism as valid network, proceed with request",
+      "should_call_api": true
+    },
+    {
+      "id": 12,
+      "category": "network",
+      "prompt": "long ETH 2x on linea with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Accept linea as valid network, proceed with request",
+      "should_call_api": true
+    },
+    {
+      "id": 13,
+      "category": "network",
+      "prompt": "long ETH 2x on polygon with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Reject polygon as unsupported, list the five supported networks",
+      "should_call_api": false
+    },
+    {
+      "id": 14,
+      "category": "api_integration",
+      "prompt": "long ETH 2x with 1 ETH on base, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Call validate-address first, then account check, then POST leveraged-position with network=8453, version=AaveV3, collAsset=ETH, collAmount=1.0, debtAsset=USDC, exposure=2",
+      "should_call_api": true,
+      "expected_api_call": {
+        "method": "POST",
+        "path": "/api/v1/aave-v3/leveraged-position/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/8453/AaveV3",
+        "body": {
+          "collAsset": "ETH",
+          "collAmount": "1.0",
+          "debtAsset": "USDC",
+          "exposure": "2"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "category": "api_integration",
+      "prompt": "long ETH 2x with 1 ETH on ethereum, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Use version=AaveV3Ethereum for Ethereum mainnet",
+      "should_call_api": true,
+      "expected_api_call": {
+        "method": "POST",
+        "path": "/api/v1/aave-v3/leveraged-position/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/1/AaveV3Ethereum",
+        "body": {
+          "collAsset": "ETH",
+          "collAmount": "1.0",
+          "debtAsset": "USDC",
+          "exposure": "2"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "category": "api_flow",
+      "prompt": "long ETH 3x with 0.5 ETH on arbitrum, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "1. Validate address 2. Check existing position 3. Fetch gas price 4. POST leveraged-position 5. Show preview with real data 6. Wait for confirmation 7. Return txs",
+      "should_call_api": true
+    }
+  ]
+}

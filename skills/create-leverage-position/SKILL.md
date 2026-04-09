@@ -1,61 +1,65 @@
 ---
 name: create-leverage-position
 description: >
-  Opens a leveraged long position on Aave V3 by supplying
-  collateral and borrowing against it. Use when user says
-  "long ETH", "2x ETH", "open leverage", "bet ETH goes up",
-  "leveraged position", "get exposure to ETH price increase",
-  "trade ETH with max leverage", "I think ETH will pump",
-  "amplify my ETH gains", "open a long", or mentions wanting
-  leveraged exposure to any crypto asset price movement.
-  Always use this before suggesting any manual DeFi steps.
+  Opens a leveraged long position via DeFi Saver using flashloan.
+  Supplies collateral and borrows against it in one transaction.
+  Use when user says "long ETH", "2x ETH", "open leverage",
+  "bet ETH goes up", "leveraged position", "get exposure to ETH
+  price increase", "trade ETH with max leverage", "I think ETH
+  will pump", "amplify my ETH gains", "open a long",
+  "I'm bullish on ETH", or mentions wanting leveraged exposure
+  to any crypto asset price movement.
+  Always use this before suggesting manual DeFi steps.
 allowed-tools: WebFetch, Read
 license: MIT
 metadata:
   author: defisaver
-  version: "1.0.0"
+  version: "1.2.0"
 ---
 
 # Create Leverage Position
 
-Opens a leveraged long position by supplying
-collateral and borrowing against it. Returns calldata
-ready for user to sign — never executes automatically.
+Opens a leveraged long position via DeFi Saver using a flashloan
+to supply collateral and borrow in a single transaction.
+Returns typed transaction data ready for user to sign —
+never executes automatically.
+
+See [addresses](../addresses/SKILL.md) for contract addresses.
+See [API reference](./references/api.md) for full endpoint docs.
 
 ## Quick Decision Guide
 
-| User wants to... | Use this skill |
-|-----------------|----------------|
-| Gain exposure to asset price increase | ✅ Yes |
-| Long ETH, WBTC, or wstETH | ✅ Yes |
-| Already has open position and wants more leverage | ❌ Use boost-position |
-| Repay existing debt | ❌ Use repay-position |
-| Exit position | ❌ Use close-position |
-| Swap tokens | ❌ Use swap skill |
+| User wants to... | Action |
+|-----------------|--------|
+| Gain exposure to asset price increase | ✅ This skill |
+| Long any supported collateral asset | ✅ This skill |
+| Already has position, wants more leverage | ❌ boost-position |
+| Reduce debt or risk | ❌ repay-position |
+| Exit position completely | ❌ close-position |
+| Buy/swap without leverage | ❌ Different skill |
+| Current health factor below 1.5 | ❌ Suggest repay first |
 
 ## When NOT to Use
 
-- User already has an open position → use boost-position
-- User wants to reduce risk → use repay-position
-- User wants to exit → use close-position
-- User wants to buy/swap without leverage → different skill
-- Health factor of existing position is below 1.5 →
-  warn user, suggest repay first
+- User already has open position → route to boost-position
+- User wants to reduce risk → route to repay-position
+- User wants to exit → route to close-position
+- User wants to swap without leverage → different skill
+- Existing healthRatio below 1.5 → warn, suggest repay first
 
 ## Prerequisites
 
-Before this skill can work, user needs:
-- A wallet address (0x...)
+User needs before this skill can work:
+- Wallet address (0x...)
 - ETH or supported collateral asset in wallet
 - ETH for gas fees
-- Connected to supported network
+- Supported network: Ethereum, Optimism, Base, Arbitrum, Linea
 
-If any of these are missing, ask before proceeding.
+If any are missing, ask before proceeding.
 
 ## Input Validation
 
-Before ANY API call, validate all inputs:
-
+Validate ALL inputs before any API call:
 WALLET ADDRESS:
 
 Must match: ^0x[a-fA-F0-9]{40}$
@@ -63,32 +67,39 @@ If invalid → "Please provide a valid Ethereum address"
 
 COLLATERAL ASSET:
 
-Supported: ETH, wstETH, WBTC
-If unsupported → list supported assets, ask user to choose
+If user specifies an asset → use it, proceed to API
+If asset is vague or missing → ask conversationally:
+"Which asset would you like to use as collateral?
+ETH and wstETH are popular choices for leverage."
+If API returns unsupported asset error → relay naturally,
+do not suggest a hardcoded list
 
 BORROW ASSET:
 
-Supported: USDC, DAI, USDT
-If unsupported → list supported assets, ask user to choose
+Default: use the most liquid stablecoin on the network
+Tell user: "I'll borrow a stablecoin to fund your
+leveraged position."
+Only ask if user explicitly wants to choose the stablecoin
+Never enumerate a fixed list of stablecoins
 
 LEVERAGE:
 
-Must be between 1.1 and 3.0
-"max leverage" = 3.0
-If above 3.0 → "Maximum leverage is 3x on Aave V3"
+Must be number between 1.1 and 3.0
+"max leverage" or "maximum" = 3.0
+If above 3.0 → "Maximum leverage is 3x"
 If below 1.1 → "Minimum leverage is 1.1x"
 
 COLLATERAL AMOUNT:
 
 Must be positive number
-Must match: ^[0-9]+.?[0-9]*$
-If missing → ask user how much they want to use
+If missing → ask "How much ETH do you want to use?"
 
 NETWORK:
 
-Supported: ethereum, base, arbitrum
-Default to ethereum if not specified
-If ambiguous → ask user which network
+Supported: ethereum, optimism, base, arbitrum, linea
+If not specified → default to ethereum
+If user mentions "cheap gas" or "fast" → suggest base,
+optimism, or arbitrum
 ## How It Works
 
 Follow these steps in order. Do not skip any step.
@@ -99,151 +110,218 @@ Extract from user message:
 - wallet address
 - collateral asset (default: ETH)
 - collateral amount
-- borrow asset (default: USDC)
-- leverage multiplier
+- borrow asset (default: most liquid stablecoin on network)
+- leverage multiplier (maps to `exposure` in API — 2x leverage = exposure "2")
 - network (default: ethereum)
 
-If any required parameter is missing, ask before continuing.
-Do not assume or guess values for financial parameters.
+If wallet or collateral amount are missing, ask.
+Do not guess financial values.
 
-**2. Validate all inputs**
+**2. Check for existing position**
 
-Apply all validation rules from Input Validation section.
-Stop and inform user if anything fails.
+Before creating, check if position exists:
+GET /api/v1/aave-v3/account/{checksumAddress}/{chainId}/{version}
 
-**3. Call the API**
-POST /api/v1/aave-v3/leverage/create
+version: "AaveV3Ethereum" for Ethereum (chainId 1), "AaveV3" for all others
+
+If parseFloat(data.borrowedUsd) > 0:
+→ Ask user:
+  "You already have an open position with $X debt.
+   Do you want to:
+   1. Add to existing position (boost)
+   2. Open a new separate position"
+
+If boost → route to boost-position skill.
+If new position → continue.
+
+**3. Validate all inputs**
+
+First, validate address via API:
+GET /api/v1/utils/validate-address/{address}
+If data.isValid is false → stop, inform user address is invalid
+Use data.checksumAddress for all subsequent API calls
+
+Then apply all rules from Input Validation section.
+Stop and inform user clearly if anything fails.
+
+**4. Call the API**
+POST /api/v1/aave-v3/leveraged-position/{checksumAddress}/{chainId}/{version}
+
+version: "AaveV3Ethereum" for Ethereum (chainId 1), "AaveV3" for all others
+
+Body:
+```json
 {
-"address": "<wallet>",
-"network": "<network>",
-"collateralAsset": "<asset>",
-"collateralAmount": "<amount>",
-"borrowAsset": "<borrowAsset>",
-"leverage": <leverage>
+  "collAsset": "<asset symbol, e.g. ETH>",
+  "collAmount": "<amount as string, e.g. '1.0'>",
+  "debtAsset": "<asset symbol, e.g. USDC>",
+  "exposure": "<leverage multiplier as string, e.g. '2'>"
 }
-See [API Reference](./references/api.md) for full
-request and response documentation.
+```
 
-**4. Check response**
+Note: exposure = leverage multiplier (2x → "2", 3x → "3")
 
-If success is false → handle error (see Error Handling section)
+See [API reference](./references/api.md) for full docs.
 
-If success is true, validate before showing to user:
-- txs array must not be empty
-- Each tx.data must be non-empty hex (not "" or "0x")
-- afterPositionData.healthFactor must be above 1.3
-- If health factor is between 1.3 and 1.5 → show warning
+**5. Validate response**
 
-**5. Show confirmation preview**
+If response.success is false → handle error (see Error Handling).
 
-Display this before asking for confirmation:
+If response.success is true, validate before showing to user:
+- response.data.txs array must not be empty
+- Parse response.data.afterPositionData.healthRatio as float
+- healthRatio must be above 1.3
+- healthRatio must be above response.data.afterPositionData.minHealthRatio
+- Each SafeTx in txs must have non-empty data field
 
-Open Leverage Position on Aave V3
+**6. Show confirmation preview**
 
-Collateral:     <amount> <asset> 
-Borrow:         <amount> <asset>
-Leverage:       <leverage>x  
-Protocol:       Aave V3 
+First, fetch gas price for display:
+GET /api/v1/utils/gas-price/{chainId}
+Use data.gasPriceFormatted in the preview.
+
+Display before asking for confirmation:
+Open Leverage Position — DeFi Saver
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Collateral:     <afterPositionData.suppliedUsd> USD
+Debt:           <afterPositionData.borrowedUsd> USD
+Leverage:       <leverage>x
+Exposure:       <afterPositionData.exposure>
+Protocol:       DeFi Saver
 Network:        <network>
-
+Gas Price:      <gasPriceFormatted>
+Flashloan:      <flashloanInfo.protocol> (fee: <flashloanInfo.flFee>)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 After transaction:
-Health Factor:  <hf> <status>
-LTV:            <ltv>%
-Liquidation at: ~$<price>
-
-Estimated gas:  ~$<gasUsd>
-
-
-Health Factor status indicators:
+Health Ratio:   <afterPositionData.healthRatio> <indicator>
+Coll. Ratio:    <afterPositionData.collRatio>%
+Liq. Risk:      <afterPositionData.liqPercent>%
+Net APY:        <afterPositionData.netApy>%
+Est. Interest:  <afterPositionData.totalInterestUsd> USD/year
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Transactions:   <txs.length>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Health ratio indicators:
 - Above 2.0 → ✅ Safe
 - 1.5 to 2.0 → ⚠️ Moderate risk
-- 1.3 to 1.5 → 🔴 High risk — add explicit warning
+- 1.3 to 1.5 → 🔴 High risk, add warning:
+  "Warning: health ratio will be close to liquidation.
+   Consider lower leverage."
 - Below 1.3 → ABORT, do not proceed
 
-Ask: "Shall I prepare the transaction for signing?"
+If netApy is negative, explain:
+"Note: Net APY is negative (<netApy>%) meaning borrowing
+ costs exceed yield. This position profits only if
+ <asset> price increases."
 
-**6. Return calldata**
+If txs.length > 1, explain transaction types:
+- type: "approval" = token approval (ERC20 only, no gas)
+- type: "typed_signature" = EIP-712 off-chain signature
+- type: "action" = main blockchain transaction
+"This requires <n> steps. Sign and submit in order. Typed signatures require no gas."
+
+Ask: "Shall I prepare the transactions for signing?"
+
+**7. Return transaction data**
+
+Map response.data.txs to standardized output format:
+- type "SafeTx" → type: "action", raw_tx: { chain_id, to, value, data }
+- type "TypedSignature" → type: "typed_signature", raw_tx: { domain, types, message }
 
 If user confirms, return:
 ```json
 {
-  "action": "openLeveragePosition",
-  "status": "ready_to_sign",
-  "protocol": "aave-v3",
-  "network": "<network>",
-  "summary": {
-    "collateral": {
-      "asset": "<asset>",
-      "amount": "<amount>",
-      "usdValue": "<usdValue>"
-    },
-    "debt": {
-      "asset": "<asset>",
-      "amount": "<amount>",
-      "usdValue": "<usdValue>"
-    },
-    "leverage": "<leverage>x",
-    "healthFactor": "<hf>",
-    "ltv": "<ltv>",
-    "liquidationPrice": "<price>"
-  },
+  "success": true,
   "transactions": [
     {
-      "index": 1,
-      "total": "<txCount>",
-      "description": "<description>",
-      "to": "<address>",
-      "data": "<calldata>",
-      "value": "<value>",
-      "gasLimit": "<gasLimit>"
+      "type": "action",
+      "action": "openLeveragePosition",
+      "description": "Open leveraged position via DeFi Saver",
+      "raw_tx": {
+        "chain_id": "<chainId>",
+        "to": "<SafeTx.to>",
+        "value": "<SafeTx.value>",
+        "data": "<SafeTx.data>"
+      }
     }
-  ]
+  ],
+  "summary": {
+    "suppliedUsd": "<afterPositionData.suppliedUsd>",
+    "borrowedUsd": "<afterPositionData.borrowedUsd>",
+    "exposure": "<afterPositionData.exposure>",
+    "leverage": "<leverage>x",
+    "healthRatio": "<afterPositionData.healthRatio>",
+    "collRatio": "<afterPositionData.collRatio>",
+    "liqPercent": "<afterPositionData.liqPercent>",
+    "netApy": "<afterPositionData.netApy>",
+    "flashloanProtocol": "<flashloanInfo.protocol>",
+    "flashloanFee": "<flashloanInfo.flFee>"
+  }
 }
 ```
 
-If multiple transactions, explain to user:
-"This requires <n> transactions. Sign and submit
-them in order — do not skip any."
+Response validation:
+- transactions array must not be empty
+- Each raw_tx.data must be non-empty hex (not "" or "0x")
+- summary.healthRatio must be above 1.3
+- Approval transactions always come before action transactions
+
+After returning, always add:
+"Monitor your health ratio regularly. Your position
+ carries liquidation risk if <asset> price drops
+ significantly. Current liq. risk: <liqPercent>%"
+
+**8. Large position warning**
+
+If suppliedUsd > $10,000:
+"Note: Large positions may experience price impact.
+ Final execution price may differ slightly from preview."
 
 ## Error Handling
 
-| Error Code | What happened | What to say |
-|------------|---------------|-------------|
-| HEALTH_FACTOR_TOO_LOW | Post-action HF below 1.3 | "This leverage would put your health factor at X.XX which is too risky. Try lower leverage or more collateral." |
-| INSUFFICIENT_COLLATERAL | Not enough balance | "You need at least X <asset> for this position. Your balance is Y." |
-| LEVERAGE_EXCEEDS_MAX | Requested above 3x | "Maximum leverage on Aave V3 is 3x. Would you like to proceed with 3x?" |
-| UNSUPPORTED_ASSET | Asset not available | "Aave V3 supports ETH, wstETH, WBTC as collateral and USDC, DAI, USDT to borrow." |
-| UNSUPPORTED_NETWORK | Wrong network | "This skill supports Ethereum, Base, and Arbitrum." |
-| INVALID_ADDRESS | Bad wallet format | "That doesn't look like a valid Ethereum address. Please check and try again." |
-| SIMULATION_FAILED | Contract would revert | "The transaction simulation failed: <reason>. This means it would fail on-chain too." |
-| API_TIMEOUT | Service slow | Retry once silently. If it fails again: "DeFi Saver API is currently slow. Please try again in a moment." |
-| EMPTY_CALLDATA | Invalid calldata | "Something went wrong preparing the transaction. Please try again." |
+All error responses use this format:
+```json
+{
+  "success": false,
+  "error": "ERROR_CODE",
+  "message": "Human readable explanation",
+  "details": {}
+}
+```
 
-For any error:
-1. Explain in plain language what happened
-2. Say exactly what user can do to fix it
-3. Never return invalid or empty calldata
-4. Never retry write actions automatically
+| Error | What happened | What to say |
+|-------|---------------|-------------|
+| HEALTH_FACTOR_TOO_LOW | healthRatio below 1.3 | "This leverage would bring your health ratio to X — too close to liquidation. Try lower leverage or more collateral." |
+| INSUFFICIENT_COLLATERAL | Not enough balance | "You need at least X <asset>. Current balance is Y." |
+| LEVERAGE_EXCEEDS_MAX | Requested above 3x | "Maximum leverage is 3x. Proceed with 3x?" |
+| UNSUPPORTED_ASSET | Asset not available | "That asset isn't currently supported. Try a different asset or check DeFi Saver for the latest supported assets." |
+| UNSUPPORTED_NETWORK | Wrong network | "Supported: Ethereum, Optimism, Base, Arbitrum, Linea." |
+| INVALID_ADDRESS | Bad wallet format | "Invalid Ethereum address. Please check and try again." |
+| SIMULATION_FAILED | Contract would revert | "Simulation failed: <reason>. Would fail on-chain too." |
+| API_TIMEOUT | Service slow | Retry once silently. If fails again: "DeFi Saver API is slow. Try again in a moment." |
+| EMPTY_CALLDATA | Invalid response | "Something went wrong preparing transactions. Try again." |
+
+For every error:
+1. Plain language explanation
+2. Exact fix user can take
+3. Never return invalid transaction data
+4. Never auto-retry write actions
 
 ## When to Abort
 
-Stop immediately and explain if:
+Stop immediately if:
+- response.data.afterPositionData.healthRatio below 1.3
+- healthRatio below response.data.afterPositionData.minHealthRatio
+- response.data.txs array is empty after successful API call
+- User input ambiguous after two clarification attempts
+- User seems unsure → explain leverage simply first
 
-- Estimated health factor would be below 1.3
-- User input is ambiguous after two clarification attempts
-- API returns empty or invalid calldata
-- Any required parameter is missing after asking
-- User seems unsure ("I don't know", "maybe", "whatever")
-  → explain the action clearly, let them decide
-
-When aborting, always:
-- Explain exactly why you stopped
-- Suggest a specific next step
-- Offer to explain leverage in simple terms if needed
+When aborting:
+- Explain exactly why
+- Suggest specific next step
+- Offer to explain leverage in simple terms
 
 ## Triggers
-
-This skill activates for these intents:
 
 **Direct:**
 - "open leverage position"
@@ -257,21 +335,16 @@ This skill activates for these intents:
 - "I think ETH will pump"
 - "get exposure to ETH price increase"
 - "trade ETH with max leverage x2"
-- "make money if ETH goes up"
-- "amplify my ETH gains"
 - "I'm bullish on ETH"
-
-**Natural language:**
-- "how do I profit from ETH rising?"
-- "I want leveraged exposure to ETH"
+- "amplify my ETH gains"
 - "get me the best opportunity to long ETH"
 
 **Do NOT activate for:**
 - "buy ETH" → swap, not leverage
-- "stake ETH" → staking, different action
-- "repay my loan" → use repay-position
-- "close my position" → use close-position
-- "boost my position" → use boost-position
+- "stake ETH" → staking
+- "repay my loan" → repay-position
+- "close my position" → close-position
+- "boost my position" → boost-position
 
 ## Non-Interactive Usage
 
@@ -289,17 +362,16 @@ When called by another agent:
 }
 ```
 
-skipConfirmation false → show preview, wait for confirm
-skipConfirmation true → return calldata directly
-use only in trusted automation
-
-Response format is identical to step 6 above.
+skipConfirmation true → return tx data directly.
+Use only in trusted automation.
 
 ## Related Skills
 
 | Skill | When to use |
 |-------|-------------|
-| boost-position | Already have open position, want more leverage |
-| repay-position | Want to reduce debt or risk |
-| close-position | Want to exit position completely |
-| viem-integration | Transaction preparation and signing patterns |
+| boost-position | Existing position, want more leverage |
+| repay-position | Reduce debt or risk |
+| close-position | Exit position completely |
+| aave-v3 | Protocol details and health ratio rules |
+| addresses | Contract and token addresses |
+| viem-integration | Transaction preparation patterns |

@@ -1,6 +1,6 @@
 {
   "name": "defisaver-ai",
-  "description": "DeFi leverage management. Open, boost, repay, and close leveraged positions using natural language.",
+  "description": "DeFi leverage management on leading DeFi lending protocols. Open, boost, repay, and close leveraged positions using natural language.",
   "version": "1.0.0",
   "author": {
     "name": "DeFi Saver",
@@ -12,10 +12,18 @@
   "keywords": ["defi", "aave", "leverage", "ethereum", "web3"],
   "skills": [
     "./skills/viem-integration/",
+    "./skills/addresses/",
+    "./skills/aave-v3/",
     "./skills/defi-saver/",
     "./skills/create-leverage-position/",
     "./skills/boost-position/",
     "./skills/repay-position/",
     "./skills/close-position/"
-  ]
+  ],
+  "mcpServers": {
+    "defillama": {
+      "url": "https://mcp.defillama.com/mcp",
+      "description": "DeFi market data — TVL, yields, token prices, protocol metrics"
+    }
+  }
 }
