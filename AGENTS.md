@@ -10,7 +10,7 @@ npx skills add defisaver/defisaver-ai
 
 ## What This Plugin Does
 
-Manage leveraged positions on Aave V3 using natural language.
+Manage leveraged positions via DeFi Saver using natural language.
 No need to understand DeFi protocols — just describe what you want.
 
 ## Skills Included
@@ -27,12 +27,12 @@ No need to understand DeFi protocols — just describe what you want.
 - Wallet address (0x...)
 - ETH or supported collateral in wallet
 - ETH for gas fees
-- Supported network: Ethereum, Base, Arbitrum
+- Supported network: Ethereum, Optimism, Base, Arbitrum, Linea
 
 ## Supported Assets
 
-Collateral: ETH, wstETH, WBTC
-Borrow: USDC, DAI, USDT
+Collateral: ETH-based assets and major crypto tokens
+Borrow: Liquid stablecoins (chosen automatically)
 
 ## Output Format
 

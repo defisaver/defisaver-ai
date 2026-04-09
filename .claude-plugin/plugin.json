@@ -1,6 +1,6 @@
 {
   "name": "defisaver-ai",
-  "description": "DeFi leverage management. Open, boost, repay, and close leveraged positions using natural language.",
+  "description": "DeFi leverage management on leading DeFi lending protocols. Open, boost, repay, and close leveraged positions using natural language.",
   "version": "1.0.0",
   "author": {
     "name": "DeFi Saver",

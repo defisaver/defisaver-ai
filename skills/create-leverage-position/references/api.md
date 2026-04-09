@@ -20,7 +20,7 @@ POST /api/v1/aave-v3/leverage/create
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | address | string | yes | User wallet address (0x...) |
-| network | string | yes | ethereum, base, arbitrum |
+| network | string | yes | ethereum, optimism, base, arbitrum, linea |
 | collateralAsset | string | yes | Asset to use as collateral |
 | collateralAmount | string | yes | Amount as decimal string |
 | borrowAsset | string | yes | Asset to borrow |
@@ -39,11 +39,13 @@ POST /api/v1/aave-v3/leverage/create
 
 ### Supported Networks
 
-| Network | Value |
-|---------|-------|
-| Ethereum Mainnet | ethereum |
-| Base | base |
-| Arbitrum | arbitrum |
+| Network | Chain ID | Value |
+|---------|----------|-------|
+| Ethereum | 1 | ethereum |
+| Optimism | 10 | optimism |
+| Base | 8453 | base |
+| Arbitrum | 42161 | arbitrum |
+| Linea | 59144 | linea |
 
 ## Response
 ```json
@@ -118,7 +120,7 @@ POST /api/v1/aave-v3/leverage/create
 |-------|------|-------------|
 | success | boolean | true if calldata prepared successfully |
 | address | string | User wallet address |
-| network | number | Chain ID (1=Ethereum, 8453=Base, 42161=Arbitrum) |
+| network | number | Chain ID (1=Ethereum, 10=Optimism, 8453=Base, 42161=Arbitrum, 59144=Linea) |
 | price | string | Execution price in ETH (very small number) |
 | afterPositionData | object | Estimated position state after tx |
 | usedAssetsChanged | object | Per-asset state after tx (keyed by symbol) |

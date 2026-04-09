@@ -1,7 +1,7 @@
 ---
 name: defi-saver
 description: >
-  Master routing skill for DeFi Saver leveraged positions on Aave V3.
+  Master routing skill for DeFi Saver leveraged positions.
   Use when user wants to manage leverage: open, boost, repay, or close
   a position. Also handles market data questions and best opportunity
   requests. Routes to the correct sub-skill based on user intent.
@@ -15,7 +15,7 @@ metadata:
 # DeFi Saver — Master Routing Skill
 
 Routes user intent to the correct sub-skill for managing leveraged
-positions on Aave V3. Handles market data queries via DefiLlama MCP.
+positions via DeFi Saver. Handles market data queries via DefiLlama MCP.
 
 ## Quick Decision Guide
 
@@ -60,12 +60,20 @@ Always check for existing position context before routing:
 
 ## Supported Networks
 
-ethereum (default), base, arbitrum
+| Network | Chain ID | Value |
+|---------|----------|-------|
+| Ethereum | 1 | ethereum |
+| Optimism | 10 | optimism |
+| Base | 8453 | base |
+| Arbitrum | 42161 | arbitrum |
+| Linea | 59144 | linea |
+
+Default: ethereum
 
 ## Supported Assets
 
-Collateral: ETH, wstETH, WBTC
-Borrow: USDC, DAI, USDT
+Collateral and borrow assets are resolved dynamically based on
+protocol availability. Do not enumerate a fixed list to users.
 
 ## Safety Constraints (apply to all sub-skills)
 

@@ -32,10 +32,11 @@ and transaction preparation patterns.
 ## Client Setup
 ```typescript
 import { createPublicClient, http } from 'viem'
-import { mainnet, base, arbitrum } from 'viem/chains'
+import { mainnet, optimism, base, arbitrum, linea } from 'viem/chains'
 
-const publicClient = createPublicClient({
-  chain: mainnet,
+// Choose your network
+const client = createPublicClient({
+  chain: base, // or mainnet, optimism, arbitrum, linea
   transport: http(),
 })
 ```
@@ -146,8 +147,10 @@ const balance = await publicClient.readContract({
 | Network | Chain ID | viem import |
 |---------|----------|-------------|
 | Ethereum | 1 | `mainnet` |
+| Optimism | 10 | `optimism` |
 | Base | 8453 | `base` |
 | Arbitrum | 42161 | `arbitrum` |
+| Linea | 59144 | `linea` |
 
 ## Common Gotchas
 

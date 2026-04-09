@@ -1,7 +1,7 @@
 ---
 name: create-leverage-position
 description: >
-  Opens a leveraged long position on Aave V3 using flashloan.
+  Opens a leveraged long position via DeFi Saver using flashloan.
   Supplies collateral and borrows against it in one transaction.
   Use when user says "long ETH", "2x ETH", "open leverage",
   "bet ETH goes up", "leveraged position", "get exposure to ETH
@@ -19,13 +19,12 @@ metadata:
 
 # Create Leverage Position
 
-Opens a leveraged long position on Aave V3 using a flashloan
+Opens a leveraged long position via DeFi Saver using a flashloan
 to supply collateral and borrow in a single transaction.
 Returns typed transaction data ready for user to sign —
 never executes automatically.
 
 See [addresses](../addresses/SKILL.md) for contract addresses.
-See [aave-v3](../aave-v3/SKILL.md) for protocol details.
 See [API reference](./references/api.md) for full endpoint docs.
 
 ## Quick Decision Guide
@@ -33,7 +32,7 @@ See [API reference](./references/api.md) for full endpoint docs.
 | User wants to... | Action |
 |-----------------|--------|
 | Gain exposure to asset price increase | ✅ This skill |
-| Long ETH, WBTC, or wstETH | ✅ This skill |
+| Long any supported collateral asset | ✅ This skill |
 | Already has position, wants more leverage | ❌ boost-position |
 | Reduce debt or risk | ❌ repay-position |
 | Exit position completely | ❌ close-position |
@@ -54,7 +53,7 @@ User needs before this skill can work:
 - Wallet address (0x...)
 - ETH or supported collateral asset in wallet
 - ETH for gas fees
-- Supported network: Ethereum, Base, Arbitrum
+- Supported network: Ethereum, Optimism, Base, Arbitrum, Linea
 
 If any are missing, ask before proceeding.
 
@@ -68,21 +67,26 @@ If invalid → "Please provide a valid Ethereum address"
 
 COLLATERAL ASSET:
 
-Supported: ETH, wstETH, WBTC
-If unsupported → "Supported collateral: ETH, wstETH, WBTC"
+If user specifies an asset → use it, proceed to API
+If asset is vague or missing → ask conversationally:
+"Which asset would you like to use as collateral?
+ETH and wstETH are popular choices for leverage."
+If API returns unsupported asset error → relay naturally,
+do not suggest a hardcoded list
 
 BORROW ASSET:
 
-Supported: USDC, DAI, USDT
-If not specified → default to USDC (most liquid)
-Tell user: "I'll borrow USDC by default — let me know
-if you prefer DAI or USDT"
+Default: use the most liquid stablecoin on the network
+Tell user: "I'll borrow a stablecoin to fund your
+leveraged position."
+Only ask if user explicitly wants to choose the stablecoin
+Never enumerate a fixed list of stablecoins
 
 LEVERAGE:
 
 Must be number between 1.1 and 3.0
 "max leverage" or "maximum" = 3.0
-If above 3.0 → "Maximum leverage on Aave V3 is 3x"
+If above 3.0 → "Maximum leverage is 3x"
 If below 1.1 → "Minimum leverage is 1.1x"
 
 COLLATERAL AMOUNT:
@@ -92,10 +96,10 @@ If missing → ask "How much ETH do you want to use?"
 
 NETWORK:
 
-Supported: ethereum, base, arbitrum
+Supported: ethereum, optimism, base, arbitrum, linea
 If not specified → default to ethereum
-If user mentions "cheap gas" or "fast" → suggest base
-or arbitrum
+If user mentions "cheap gas" or "fast" → suggest base,
+optimism, or arbitrum
 ## How It Works
 
 Follow these steps in order. Do not skip any step.
@@ -106,7 +110,7 @@ Extract from user message:
 - wallet address
 - collateral asset (default: ETH)
 - collateral amount
-- borrow asset (default: USDC)
+- borrow asset (default: most liquid stablecoin on network)
 - leverage multiplier
 - network (default: ethereum)
 
@@ -163,13 +167,13 @@ If success is true, validate before showing to user:
 **6. Show confirmation preview**
 
 Display before asking for confirmation:
-Open Leverage Position — Aave V3
+Open Leverage Position — DeFi Saver
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Collateral:     <suppliedUsd> USD
 Debt:           <borrowedUsd> USD
 Leverage:       <leverage>x
 Exposure:       <exposure> ETH
-Protocol:       Aave V3
+Protocol:       DeFi Saver
 Network:        <network>
 Flashloan:      <flashloanInfo.protocol> (fee: <flFee>)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -280,9 +284,9 @@ All error responses use this format:
 |-------|---------------|-------------|
 | HEALTH_FACTOR_TOO_LOW | healthRatio below 1.3 | "This leverage would bring your health ratio to X — too close to liquidation. Try lower leverage or more collateral." |
 | INSUFFICIENT_COLLATERAL | Not enough balance | "You need at least X <asset>. Current balance is Y." |
-| LEVERAGE_EXCEEDS_MAX | Requested above 3x | "Maximum leverage on Aave V3 is 3x. Proceed with 3x?" |
-| UNSUPPORTED_ASSET | Asset not available | "Supported collateral: ETH, wstETH, WBTC. Borrow: USDC, DAI, USDT." |
-| UNSUPPORTED_NETWORK | Wrong network | "Supported: Ethereum, Base, Arbitrum." |
+| LEVERAGE_EXCEEDS_MAX | Requested above 3x | "Maximum leverage is 3x. Proceed with 3x?" |
+| UNSUPPORTED_ASSET | Asset not available | "That asset isn't currently supported. Try a different asset or check DeFi Saver for the latest supported assets." |
+| UNSUPPORTED_NETWORK | Wrong network | "Supported: Ethereum, Optimism, Base, Arbitrum, Linea." |
 | INVALID_ADDRESS | Bad wallet format | "Invalid Ethereum address. Please check and try again." |
 | SIMULATION_FAILED | Contract would revert | "Simulation failed: <reason>. Would fail on-chain too." |
 | API_TIMEOUT | Service slow | Retry once silently. If fails again: "DeFi Saver API is slow. Try again in a moment." |

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repository Is
 
-A Claude Code plugin (skills package) for DeFi leverage management on Aave V3. It ships SKILL.md files — structured natural language instructions that AI agents load as context to perform DeFi actions. There is no application code to build or test; the "code" is the skill definitions themselves.
+A Claude Code plugin (skills package) for DeFi leverage management via leading lending protocols. It ships SKILL.md files — structured natural language instructions that AI agents load as context to perform DeFi actions. There is no application code to build or test; the "code" is the skill definitions themselves.
 
 ## Development Setup
 ```bash
@@ -22,7 +22,7 @@ claude --plugin-dir . --skill create-leverage-position
 skills/
   viem-integration/SKILL.md      # Core EVM primitives (address validation, amount formatting, simulation)
   addresses/SKILL.md              # Contract addresses per network
-  aave-v3/SKILL.md                # Aave V3 protocol reference
+  aave-v3/SKILL.md                # Lending protocol reference (internal)
   defi-saver/SKILL.md             # Master routing skill
   create-leverage-position/
     SKILL.md                     # Main skill instructions
@@ -71,9 +71,7 @@ Keep SKILL.md files under 500 lines. Use `references/` for detailed docs loaded 
 
 - Health factor must stay above 1.3 (abort) / warn below 1.5
 - Leverage: 1.1x min, 3.0x max
-- Collateral assets: ETH, wstETH, WBTC
-- Borrow assets: USDC, DAI, USDT
-- Networks: ethereum (default), base, arbitrum
+- Networks: ethereum (default), optimism, base, arbitrum, linea
 - ERC20 collateral requires 2 transactions (approve + main tx); ETH requires 1
 - Always validate inputs before API calls; always simulate before preparing calldata
 - Never retry write actions automatically on failure

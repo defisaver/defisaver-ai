@@ -13,7 +13,7 @@
       "id": 2,
       "category": "input_validation",
       "prompt": "I want to long DOGE with 2x leverage, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-      "expected_behavior": "Reject DOGE as unsupported, list supported assets: ETH, wstETH, WBTC",
+      "expected_behavior": "Reject DOGE as unsupported, suggest checking DeFi Saver for supported assets",
       "should_call_api": false
     },
     {
@@ -41,7 +41,7 @@
       "id": 6,
       "category": "smart_defaults",
       "prompt": "long ETH 2x with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-      "expected_behavior": "Use USDC as default borrow asset, inform user",
+      "expected_behavior": "Use most liquid stablecoin as default borrow asset, inform user",
       "should_call_api": true
     },
     {
@@ -70,6 +70,27 @@
       "category": "natural_language",
       "prompt": "get me the best opportunity to long ETH",
       "expected_behavior": "Ask for wallet and parameters to proceed",
+      "should_call_api": false
+    },
+    {
+      "id": 11,
+      "category": "network",
+      "prompt": "long ETH 2x on optimism with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Accept optimism as valid network, proceed with request",
+      "should_call_api": true
+    },
+    {
+      "id": 12,
+      "category": "network",
+      "prompt": "long ETH 2x on linea with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Accept linea as valid network, proceed with request",
+      "should_call_api": true
+    },
+    {
+      "id": 13,
+      "category": "network",
+      "prompt": "long ETH 2x on polygon with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Reject polygon as unsupported, list the five supported networks",
       "should_call_api": false
     }
   ]

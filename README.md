@@ -1,6 +1,6 @@
 # DeFi Saver AI Plugin
 
-Leverage management on Aave V3 using natural language.
+Leverage management on leading DeFi lending protocols using natural language.
 Open, boost, repay, and close leveraged positions —
 just describe what you want.
 
@@ -37,15 +37,15 @@ After installing, try these in your agent:
 
 ## Supported Protocols
 
-- Aave V3 on Ethereum, Base, Arbitrum
+- Leading lending protocols on Ethereum, Optimism, Base, Arbitrum, and Linea
 - Flashloans via Morpho (zero fee)
 
 ## Supported Assets
 
-| Role | Assets |
-|------|--------|
-| Collateral | ETH, wstETH, WBTC |
-| Borrow | USDC, DAI, USDT |
+Collateral assets and borrow assets are resolved dynamically based on
+protocol availability.
+Common collateral: ETH, wstETH, and other major assets.
+Borrow asset: automatically selected liquid stablecoin.
 
 ## Requirements
 

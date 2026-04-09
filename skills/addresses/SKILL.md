@@ -14,6 +14,10 @@ metadata:
 
 # Addresses
 
+> **Internal reference only.** Do not expose this list to users as a
+> definitive list of supported assets — availability depends on the
+> protocol and network at execution time.
+
 Verified contract and token addresses for DeFi Saver plugin.
 
 > **CRITICAL:** Never guess or hallucinate an address.
@@ -43,12 +47,25 @@ Verified contract and token addresses for DeFi Saver plugin.
 | Pool | `0xA238Dd80C259a72e81d7e4664a9801593F98d1c5` |
 | PoolAddressesProvider | `0xe20fCBdBfFC4Dd138cE8b2E6FBb6CB49777ad64D` |
 
+### Optimism (chainId: 10)
+
+| Contract | Address |
+|----------|---------|
+| Pool | `0x794a61358D6845594F94dc1DB02A252b5b4814aD` |
+| PoolAddressesProvider | `0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb` |
+
 ### Arbitrum (chainId: 42161)
 
 | Contract | Address |
 |----------|---------|
 | Pool | `0x794a61358D6845594F94dc1DB02A252b5b4814aD` |
 | PoolAddressesProvider | `0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb` |
+
+### Linea (chainId: 59144)
+
+| Contract | Address |
+|----------|---------|
+| Pool | `0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e` |
 
 ## Token Addresses
 
@@ -73,6 +90,17 @@ Verified contract and token addresses for DeFi Saver plugin.
 | USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6 |
 | DAI | `0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb` | 18 |
 
+### Optimism (chainId: 10)
+
+| Token | Address | Decimals |
+|-------|---------|----------|
+| ETH (native) | `0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE` | 18 |
+| WETH | `0x4200000000000000000000000000000000000006` | 18 |
+| wstETH | `0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb` | 18 |
+| USDC | `0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85` | 6 |
+| USDT | `0x94b008aA00579c1307B0EF2c499aD98a8ce58e58` | 6 |
+| DAI | `0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1` | 18 |
+
 ### Arbitrum (chainId: 42161)
 
 | Token | Address | Decimals |
@@ -84,6 +112,16 @@ Verified contract and token addresses for DeFi Saver plugin.
 | USDC | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` | 6 |
 | USDT | `0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9` | 6 |
 | DAI | `0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1` | 18 |
+
+### Linea (chainId: 59144)
+
+| Token | Address | Decimals |
+|-------|---------|----------|
+| ETH (native) | `0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE` | 18 |
+| WETH | `0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34` | 18 |
+| USDC | `0x176211869cA2b568f2A7D4EE941E073a821EE1ff` | 6 |
+| USDT | `0xA219439258ca9da29E9Cc4cE5596924745e12B93` | 6 |
+| DAI | `0x4AF15ec2A0BD43Db75dd04E62FAA3B8EF36b00d8` | 18 |
 
 ## Verification
 
