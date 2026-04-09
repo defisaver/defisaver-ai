@@ -120,9 +120,9 @@ Do not guess financial values.
 **2. Check for existing position**
 
 Before creating, check if position exists:
-GET /api/v1/aave-v3/account/{checksumAddress}/{chainId}/{version}
+GET https://ai.defisaver.com/api/v1/aave-v3/account/{checksumAddress}/{chainId}/{version}
 
-version: "AaveV3Ethereum" for Ethereum (chainId 1), "AaveV3" for all others
+version: "v3default" for all networks
 
 If parseFloat(data.borrowedUsd) > 0:
 → Ask user:
@@ -137,7 +137,7 @@ If new position → continue.
 **3. Validate all inputs**
 
 First, validate address via API:
-GET /api/v1/utils/validate-address/{address}
+GET https://ai.defisaver.com/api/v1/utils/validate-address/{address}
 If data.isValid is false → stop, inform user address is invalid
 Use data.checksumAddress for all subsequent API calls
 
@@ -145,9 +145,9 @@ Then apply all rules from Input Validation section.
 Stop and inform user clearly if anything fails.
 
 **4. Call the API**
-POST /api/v1/aave-v3/leveraged-position/{checksumAddress}/{chainId}/{version}
+POST https://ai.defisaver.com/api/v1/aave-v3/leveraged-position/{checksumAddress}/{chainId}/{version}
 
-version: "AaveV3Ethereum" for Ethereum (chainId 1), "AaveV3" for all others
+version: "v3default" for all networks
 
 Body:
 ```json
@@ -177,7 +177,7 @@ If response.success is true, validate before showing to user:
 **6. Show confirmation preview**
 
 First, fetch gas price for display:
-GET /api/v1/utils/gas-price/{chainId}
+GET https://ai.defisaver.com/api/v1/utils/gas-price/{chainId}
 Use data.gasPriceFormatted in the preview.
 
 Display before asking for confirmation:
