@@ -111,7 +111,7 @@ Extract from user message:
 - collateral asset (default: ETH)
 - collateral amount
 - borrow asset (default: most liquid stablecoin on network)
-- leverage multiplier
+- leverage multiplier (maps to `exposure` in API — 2x leverage = exposure "2")
 - network (default: ethereum)
 
 If wallet or collateral amount are missing, ask.
@@ -120,9 +120,11 @@ Do not guess financial values.
 **2. Check for existing position**
 
 Before creating, check if position exists:
-GET /api/v1/aave-v3/account/{address}/{network}/v3
+GET /api/v1/aave-v3/account/{checksumAddress}/{chainId}/{version}
 
-If totalDebtUSD > 0:
+version: "AaveV3Ethereum" for Ethereum (chainId 1), "AaveV3" for all others
+
+If parseFloat(data.borrowedUsd) > 0:
 → Ask user:
   "You already have an open position with $X debt.
    Do you want to:
@@ -134,55 +136,68 @@ If new position → continue.
 
 **3. Validate all inputs**
 
-Apply all rules from Input Validation section.
+First, validate address via API:
+GET /api/v1/utils/validate-address/{address}
+If data.isValid is false → stop, inform user address is invalid
+Use data.checksumAddress for all subsequent API calls
+
+Then apply all rules from Input Validation section.
 Stop and inform user clearly if anything fails.
 
 **4. Call the API**
-POST /api/v1/aave-v3/leverage/create
+POST /api/v1/aave-v3/leveraged-position/{checksumAddress}/{chainId}/{version}
 
-Request:
+version: "AaveV3Ethereum" for Ethereum (chainId 1), "AaveV3" for all others
+
+Body:
 ```json
 {
-  "address": "<wallet>",
-  "network": "<network>",
-  "collateralAsset": "<asset>",
-  "collateralAmount": "<amount>",
-  "borrowAsset": "<borrowAsset>",
-  "leverage": <leverage>
+  "collAsset": "<asset symbol, e.g. ETH>",
+  "collAmount": "<amount as string, e.g. '1.0'>",
+  "debtAsset": "<asset symbol, e.g. USDC>",
+  "exposure": "<leverage multiplier as string, e.g. '2'>"
 }
 ```
+
+Note: exposure = leverage multiplier (2x → "2", 3x → "3")
 
 See [API reference](./references/api.md) for full docs.
 
 **5. Validate response**
 
-If success is false → handle error (see Error Handling).
+If response.success is false → handle error (see Error Handling).
 
-If success is true, validate before showing to user:
-- txs array must not be empty
-- Parse afterPositionData.healthRatio as float
+If response.success is true, validate before showing to user:
+- response.data.txs array must not be empty
+- Parse response.data.afterPositionData.healthRatio as float
 - healthRatio must be above 1.3
-- healthRatio must be above minHealthRatio
+- healthRatio must be above response.data.afterPositionData.minHealthRatio
+- Each SafeTx in txs must have non-empty data field
 
 **6. Show confirmation preview**
+
+First, fetch gas price for display:
+GET /api/v1/utils/gas-price/{chainId}
+Use data.gasPriceFormatted in the preview.
 
 Display before asking for confirmation:
 Open Leverage Position — DeFi Saver
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Collateral:     <suppliedUsd> USD
-Debt:           <borrowedUsd> USD
+Collateral:     <afterPositionData.suppliedUsd> USD
+Debt:           <afterPositionData.borrowedUsd> USD
 Leverage:       <leverage>x
-Exposure:       <exposure> ETH
+Exposure:       <afterPositionData.exposure>
 Protocol:       DeFi Saver
 Network:        <network>
-Flashloan:      <flashloanInfo.protocol> (fee: <flFee>)
+Gas Price:      <gasPriceFormatted>
+Flashloan:      <flashloanInfo.protocol> (fee: <flashloanInfo.flFee>)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 After transaction:
-Health Ratio:   <healthRatio> <indicator>
-Coll. Ratio:    <collRatio>%
-Liq. Risk:      <liqPercent>%
-Net APY:        <netApy>%
-Est. Interest:  <totalInterestUsd> USD/year
+Health Ratio:   <afterPositionData.healthRatio> <indicator>
+Coll. Ratio:    <afterPositionData.collRatio>%
+Liq. Risk:      <afterPositionData.liqPercent>%
+Net APY:        <afterPositionData.netApy>%
+Est. Interest:  <afterPositionData.totalInterestUsd> USD/year
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Transactions:   <txs.length>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -209,44 +224,38 @@ Ask: "Shall I prepare the transactions for signing?"
 
 **7. Return transaction data**
 
+Map response.data.txs to standardized output format:
+- type "SafeTx" → type: "action", raw_tx: { chain_id, to, value, data }
+- type "TypedSignature" → type: "typed_signature", raw_tx: { domain, types, message }
+
 If user confirms, return:
 ```json
 {
   "success": true,
   "transactions": [
     {
-      "type": "approval",
-      "description": "Approve token spending",
-      "raw_tx": {
-        "chain_id": 1,
-        "to": "0x...",
-        "value": "0",
-        "data": "0x..."
-      }
-    },
-    {
       "type": "action",
       "action": "openLeveragePosition",
-      "description": "Supply ETH and borrow USDC via Morpho flashloan",
+      "description": "Open leveraged position via DeFi Saver",
       "raw_tx": {
-        "chain_id": 1,
-        "to": "0x...",
-        "value": "0",
-        "data": "0x..."
+        "chain_id": "<chainId>",
+        "to": "<SafeTx.to>",
+        "value": "<SafeTx.value>",
+        "data": "<SafeTx.data>"
       }
     }
   ],
   "summary": {
-    "suppliedUsd": "<value>",
-    "borrowedUsd": "<value>",
-    "exposure": "<value>",
+    "suppliedUsd": "<afterPositionData.suppliedUsd>",
+    "borrowedUsd": "<afterPositionData.borrowedUsd>",
+    "exposure": "<afterPositionData.exposure>",
     "leverage": "<leverage>x",
-    "healthRatio": "<value>",
-    "collRatio": "<value>",
-    "liqPercent": "<value>",
-    "netApy": "<value>",
-    "flashloanProtocol": "<protocol>",
-    "flashloanFee": "<fee>"
+    "healthRatio": "<afterPositionData.healthRatio>",
+    "collRatio": "<afterPositionData.collRatio>",
+    "liqPercent": "<afterPositionData.liqPercent>",
+    "netApy": "<afterPositionData.netApy>",
+    "flashloanProtocol": "<flashloanInfo.protocol>",
+    "flashloanFee": "<flashloanInfo.flFee>"
   }
 }
 ```
@@ -301,9 +310,9 @@ For every error:
 ## When to Abort
 
 Stop immediately if:
-- afterPositionData.healthRatio would be below 1.3
-- healthRatio below minHealthRatio from response
-- txs array is empty after successful API call
+- response.data.afterPositionData.healthRatio below 1.3
+- healthRatio below response.data.afterPositionData.minHealthRatio
+- response.data.txs array is empty after successful API call
 - User input ambiguous after two clarification attempts
 - User seems unsure → explain leverage simply first
 

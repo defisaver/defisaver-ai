@@ -92,6 +92,47 @@
       "prompt": "long ETH 2x on polygon with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
       "expected_behavior": "Reject polygon as unsupported, list the five supported networks",
       "should_call_api": false
+    },
+    {
+      "id": 14,
+      "category": "api_integration",
+      "prompt": "long ETH 2x with 1 ETH on base, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Call validate-address first, then account check, then POST leveraged-position with network=8453, version=AaveV3, collAsset=ETH, collAmount=1.0, debtAsset=USDC, exposure=2",
+      "should_call_api": true,
+      "expected_api_call": {
+        "method": "POST",
+        "path": "/api/v1/aave-v3/leveraged-position/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/8453/AaveV3",
+        "body": {
+          "collAsset": "ETH",
+          "collAmount": "1.0",
+          "debtAsset": "USDC",
+          "exposure": "2"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "category": "api_integration",
+      "prompt": "long ETH 2x with 1 ETH on ethereum, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Use version=AaveV3Ethereum for Ethereum mainnet",
+      "should_call_api": true,
+      "expected_api_call": {
+        "method": "POST",
+        "path": "/api/v1/aave-v3/leveraged-position/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/1/AaveV3Ethereum",
+        "body": {
+          "collAsset": "ETH",
+          "collAmount": "1.0",
+          "debtAsset": "USDC",
+          "exposure": "2"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "category": "api_flow",
+      "prompt": "long ETH 3x with 0.5 ETH on arbitrum, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "1. Validate address 2. Check existing position 3. Fetch gas price 4. POST leveraged-position 5. Show preview with real data 6. Wait for confirmation 7. Return txs",
+      "should_call_api": true
     }
   ]
 }
