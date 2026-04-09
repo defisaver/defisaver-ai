@@ -10,17 +10,17 @@ POST /api/v1/aave-v3/leveraged-position/:address/:network/:version
 |-------|-------------|---------|
 | address | Checksummed wallet address | `0x742d35...` |
 | network | Chain ID as integer | `8453` |
-| version | AaveVersions enum value | `AaveV3` |
+| version | AaveVersions enum value | `v3default` |
 
 ### Network to Version Mapping
 
 | Network | Chain ID | version param |
 |---------|----------|---------------|
-| Ethereum | 1 | AaveV3Ethereum |
-| Optimism | 10 | AaveV3 |
-| Base | 8453 | AaveV3 |
-| Arbitrum | 42161 | AaveV3 |
-| Linea | 59144 | AaveV3 |
+| Ethereum | 1 | v3default |
+| Optimism | 10 | v3default |
+| Base | 8453 | v3default |
+| Arbitrum | 42161 | v3default |
+| Linea | 59144 | v3default |
 
 ### Request Body
 
@@ -217,7 +217,7 @@ GET /api/v1/utils/gas-price/:chainId
 
 1. address: use `/api/v1/utils/validate-address/` first
 2. network: must be one of 1, 10, 8453, 42161, 59144
-3. version: use "AaveV3Ethereum" for chainId 1, "AaveV3" for all others
+3. version: use "v3default" for all networks
 4. collAmount: positive number as string
 5. exposure: number > 1 as string (maps from UI leverage multiplier)
 

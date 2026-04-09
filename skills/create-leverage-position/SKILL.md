@@ -122,7 +122,7 @@ Do not guess financial values.
 Before creating, check if position exists:
 GET /api/v1/aave-v3/account/{checksumAddress}/{chainId}/{version}
 
-version: "AaveV3Ethereum" for Ethereum (chainId 1), "AaveV3" for all others
+version: "v3default" for all networks
 
 If parseFloat(data.borrowedUsd) > 0:
 → Ask user:
@@ -147,7 +147,7 @@ Stop and inform user clearly if anything fails.
 **4. Call the API**
 POST /api/v1/aave-v3/leveraged-position/{checksumAddress}/{chainId}/{version}
 
-version: "AaveV3Ethereum" for Ethereum (chainId 1), "AaveV3" for all others
+version: "v3default" for all networks
 
 Body:
 ```json
