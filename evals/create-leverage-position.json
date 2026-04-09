@@ -1,0 +1,76 @@
+{
+  "skill_name": "create-leverage-position",
+  "description": "Evals for create-leverage-position skill",
+  "evals": [
+    {
+      "id": 1,
+      "category": "input_validation",
+      "prompt": "long ETH 2x, my wallet is 0xinvalidaddress",
+      "expected_behavior": "Reject with invalid address error, ask for valid address",
+      "should_call_api": false
+    },
+    {
+      "id": 2,
+      "category": "input_validation",
+      "prompt": "I want to long DOGE with 2x leverage, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Reject DOGE as unsupported, list supported assets: ETH, wstETH, WBTC",
+      "should_call_api": false
+    },
+    {
+      "id": 3,
+      "category": "input_validation",
+      "prompt": "open ETH leverage position 10x, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Reject leverage above 3x, inform max is 3x",
+      "should_call_api": false
+    },
+    {
+      "id": 4,
+      "category": "missing_params",
+      "prompt": "long ETH 2x leverage",
+      "expected_behavior": "Ask for wallet address and collateral amount before proceeding",
+      "should_call_api": false
+    },
+    {
+      "id": 5,
+      "category": "missing_params",
+      "prompt": "long ETH with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Use default leverage or ask for leverage amount",
+      "should_call_api": false
+    },
+    {
+      "id": 6,
+      "category": "smart_defaults",
+      "prompt": "long ETH 2x with 1 ETH, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Use USDC as default borrow asset, inform user",
+      "should_call_api": true
+    },
+    {
+      "id": 7,
+      "category": "routing",
+      "prompt": "boost my existing ETH position, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Route to boost-position skill, not create-leverage-position",
+      "should_call_api": false
+    },
+    {
+      "id": 8,
+      "category": "routing",
+      "prompt": "repay my loan, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Route to repay-position skill",
+      "should_call_api": false
+    },
+    {
+      "id": 9,
+      "category": "natural_language",
+      "prompt": "I think ETH will pump, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Recognize as leverage intent, ask for amount and leverage",
+      "should_call_api": false
+    },
+    {
+      "id": 10,
+      "category": "natural_language",
+      "prompt": "get me the best opportunity to long ETH",
+      "expected_behavior": "Ask for wallet and parameters to proceed",
+      "should_call_api": false
+    }
+  ]
+}
