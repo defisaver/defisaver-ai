@@ -196,9 +196,10 @@ If netApy is negative, explain:
  <asset> price increases."
 
 If txs.length > 1, explain transaction types:
-- SafeTx = standard blockchain transaction
-- TypedSignature = off-chain signature (no gas)
-"This requires <n> steps. Complete them in order."
+- type: "approval" = token approval (ERC20 only, no gas)
+- type: "typed_signature" = EIP-712 off-chain signature
+- type: "action" = main blockchain transaction
+"This requires <n> steps. Sign and submit in order. Typed signatures require no gas."
 
 Ask: "Shall I prepare the transactions for signing?"
 
@@ -207,10 +208,30 @@ Ask: "Shall I prepare the transactions for signing?"
 If user confirms, return:
 ```json
 {
-  "action": "openLeveragePosition",
-  "status": "ready_to_sign",
-  "protocol": "aave-v3",
-  "network": "<network>",
+  "success": true,
+  "transactions": [
+    {
+      "type": "approval",
+      "description": "Approve token spending",
+      "raw_tx": {
+        "chain_id": 1,
+        "to": "0x...",
+        "value": "0",
+        "data": "0x..."
+      }
+    },
+    {
+      "type": "action",
+      "action": "openLeveragePosition",
+      "description": "Supply ETH and borrow USDC via Morpho flashloan",
+      "raw_tx": {
+        "chain_id": 1,
+        "to": "0x...",
+        "value": "0",
+        "data": "0x..."
+      }
+    }
+  ],
   "summary": {
     "suppliedUsd": "<value>",
     "borrowedUsd": "<value>",
@@ -222,10 +243,15 @@ If user confirms, return:
     "netApy": "<value>",
     "flashloanProtocol": "<protocol>",
     "flashloanFee": "<fee>"
-  },
-  "transactions": "<txs array from API response>"
+  }
 }
 ```
+
+Response validation:
+- transactions array must not be empty
+- Each raw_tx.data must be non-empty hex (not "" or "0x")
+- summary.healthRatio must be above 1.3
+- Approval transactions always come before action transactions
 
 After returning, always add:
 "Monitor your health ratio regularly. Your position
@@ -239,6 +265,16 @@ If suppliedUsd > $10,000:
  Final execution price may differ slightly from preview."
 
 ## Error Handling
+
+All error responses use this format:
+```json
+{
+  "success": false,
+  "error": "ERROR_CODE",
+  "message": "Human readable explanation",
+  "details": {}
+}
+```
 
 | Error | What happened | What to say |
 |-------|---------------|-------------|

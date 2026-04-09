@@ -10,32 +10,62 @@ npx skills add defisaver/defisaver-ai
 
 ## What This Plugin Does
 
-Manage leveraged positions using natural language.
+Manage leveraged positions on Aave V3 using natural language.
 No need to understand DeFi protocols — just describe what you want.
 
 ## Skills Included
 
 | Skill | Trigger examples |
 |-------|-----------------|
-| create-leverage-position | "long ETH 2x", "bet ETH goes up" |
+| create-leverage-position | "long ETH 2x", "bet ETH goes up", "open leveraged position" |
 | boost-position | "increase my leverage", "boost my position" |
-| repay-position | "repay my loan", "reduce my risk" |
-| close-position | "close my position", "exit my long" |
+| repay-position | "repay my loan", "reduce my risk", "lower health risk" |
+| close-position | "close my position", "exit my long", "unwind position" |
 
 ## Requirements
 
 - Wallet address (0x...)
 - ETH or supported collateral in wallet
 - ETH for gas fees
-- Supported network: Ethereum, Base, Arbitrum (TBD)
+- Supported network: Ethereum, Base, Arbitrum
 
 ## Supported Assets
 
-Collateral: ETH, wstETH, WBTC (TBD)
-Borrow: USDC, DAI, USDT (TBD)
+Collateral: ETH, wstETH, WBTC
+Borrow: USDC, DAI, USDT
 
-## Important
+## Output Format
 
-This plugin prepares transactions for your signature.
-It never signs or submits transactions automatically.
-You always review and confirm before anything happens on-chain.
+All skills return unsigned transactions:
+```json
+{
+  "success": true,
+  "transactions": [
+    {
+      "type": "approval | typed_signature | action",
+      "description": "Human readable description",
+      "raw_tx": {
+        "chain_id": 1,
+        "to": "0x...",
+        "value": "0",
+        "data": "0x..."
+      }
+    }
+  ],
+  "summary": {}
+}
+```
+
+Sign and submit transactions in order.
+`typed_signature` transactions require signing only (no gas).
+
+## Safety
+
+This plugin NEVER:
+- Signs transactions on your behalf
+- Accesses private keys
+- Executes without explicit user confirmation
+- Proceeds with health ratio below 1.3
+- Accepts leverage above 3x
+
+All output is unsigned. You always control signing.

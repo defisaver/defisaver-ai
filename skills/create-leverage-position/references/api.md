@@ -169,10 +169,13 @@ Object keyed by asset symbol (ETH, USDC, USDT, etc.)
 
 Array of typed transaction objects. Sign and submit in order.
 
-| Type | Description |
-|------|-------------|
-| SafeTx | Standard transaction (to, data, value) |
-| TypedSignature | EIP-712 typed signature (domain, types, message) |
+| Type | Description | Gas required |
+|------|-------------|--------------|
+| SafeTx | Standard blockchain transaction | Yes |
+| TypedSignature | EIP-712 off-chain signature | No |
+
+Order: Always sign and submit in sequence.
+TypedSignature requires no gas — sign only, do not submit as tx.
 
 May contain 1, 2, or 3 transactions depending on:
 - Token approvals needed
@@ -194,6 +197,16 @@ If flFee is "0" — flashloan is free (Morpho).
 Show protocol to user: "Uses Morpho flashloan (no fee)"
 
 ## Error Responses
+```json
+{
+  "success": false,
+  "error": "ERROR_CODE",
+  "message": "description",
+  "details": {}
+}
+```
+
+Example:
 ```json
 {
   "success": false,
