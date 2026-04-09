@@ -2,7 +2,7 @@
 
 ## Main Endpoint
 
-POST /api/v1/aave-v3/leveraged-position/:address/:network/:version
+POST https://ai.defisaver.com/api/v1/aave-v3/leveraged-position/:address/:network/:version
 
 ### URL Parameters
 
@@ -169,7 +169,7 @@ TypedSignature requires no gas — sign only, do not submit as tx.
 ## Supporting Endpoints
 
 ### Validate Address (before any call)
-GET /api/v1/utils/validate-address/:address
+GET https://ai.defisaver.com/api/v1/utils/validate-address/:address
 
 ```json
 { "address": "0x...", "isValid": true, "checksumAddress": "0x742d35..." }
@@ -178,13 +178,13 @@ GET /api/v1/utils/validate-address/:address
 Always call this first. Use `checksumAddress` in all subsequent calls.
 
 ### Check Existing Position
-GET /api/v1/aave-v3/account/:address/:network/:version
+GET https://ai.defisaver.com/api/v1/aave-v3/account/:address/:network/:version
 
 Use to check if a position already exists before creating a new one.
 Check: `parseFloat(data.borrowedUsd) > 0` → position exists.
 
 ### Get Gas Price (for display)
-GET /api/v1/utils/gas-price/:chainId
+GET https://ai.defisaver.com/api/v1/utils/gas-price/:chainId
 
 ```json
 { "chainId": 8453, "chainName": "Base", "gasPrice": "...", "gasPriceFormatted": "0.01 gwei" }

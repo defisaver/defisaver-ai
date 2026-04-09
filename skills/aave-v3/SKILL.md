@@ -65,13 +65,13 @@ Use these endpoints to read position data via DeFi Saver API
 instead of direct RPC calls.
 
 ### Get Account Position
-GET /api/v1/aave-v3/account/{address}/{network}/{version}
+GET https://ai.defisaver.com/api/v1/aave-v3/account/{address}/{network}/{version}
 
 Returns current position: healthFactor, LTV, collateral, debt.
 Use before any write action to check current state.
 
 ### Get Combined Position + Market Data
-GET /api/v1/aave-v3/position/{address}/{network}/{version}
+GET https://ai.defisaver.com/api/v1/aave-v3/position/{address}/{network}/{version}
 
 Returns { account, market } combined.
 Use for full position overview.

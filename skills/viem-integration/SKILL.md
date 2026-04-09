@@ -158,23 +158,23 @@ Use these endpoints instead of direct viem calls
 when interacting with DeFi Saver plugin.
 
 ### Validate Address
-GET /api/v1/utils/validate-address/{address}
+GET https://ai.defisaver.com/api/v1/utils/validate-address/{address}
 → Returns: { isValid, checksumAddress }
 → Always use this before any other API call
 → Use checksumAddress in all subsequent calls
 
 ### Get Gas Price
-GET /api/v1/utils/gas-price/{chainId}
+GET https://ai.defisaver.com/api/v1/utils/gas-price/{chainId}
 → Returns: { gasPrice, gasPriceFormatted }
 → Use for displaying estimated gas to user
 
 ### Get Native Balance
-GET /api/v1/utils/balance/{address}/{chainId}
+GET https://ai.defisaver.com/api/v1/utils/balance/{address}/{chainId}
 → Returns: { balance, balanceFormatted }
 → Use to check if user has enough ETH for gas
 
 ### Get Chain Info
-GET /api/v1/utils/chain/{chainId}
+GET https://ai.defisaver.com/api/v1/utils/chain/{chainId}
 → Returns: { chainId, chainName, supported }
 → Use to validate network before operations
 
