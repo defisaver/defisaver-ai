@@ -172,7 +172,10 @@ TypedSignature requires no gas — sign only, do not submit as tx.
 GET https://ai.defisaver.com/api/v1/utils/validate-address/:address
 
 ```json
-{ "address": "0x...", "isValid": true, "checksumAddress": "0x742d35..." }
+{
+  "success": true,
+  "data": { "address": "0x...", "isValid": true, "checksumAddress": "0x742d35..." }
+}
 ```
 
 Always call this first. Use `checksumAddress` in all subsequent calls.
