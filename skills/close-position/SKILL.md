@@ -81,12 +81,10 @@ Use `data.checksumAddress` for all subsequent calls.
 
 **Step 3 — Fetch existing position**
 
-Determine `version`:
-- chainId 1 → `"AaveV3Ethereum"`
-- chainId 10, 8453, 42161, 59144 → `"AaveV3"`
+Use `version: "v3default"` for all networks.
 
 ```
-GET https://ai.defisaver.com/api/v1/aave-v3/account/{checksumAddress}/{chainId}/{version}
+GET https://ai.defisaver.com/api/v1/aave-v3/account/{checksumAddress}/{chainId}/v3default
 ```
 
 If `parseFloat(data.borrowedUsd) === 0` → no open position. Say:

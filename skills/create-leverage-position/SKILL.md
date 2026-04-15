@@ -110,12 +110,10 @@ Use `data.checksumAddress` for all subsequent calls.
 
 **Step 3 — Check for existing position**
 
-Determine `version` from chainId:
-- chainId 1 → `"AaveV3Ethereum"`
-- chainId 10, 8453, 42161, 59144 → `"AaveV3"`
+Use `version: "v3default"` for all networks.
 
 ```
-GET https://ai.defisaver.com/api/v1/aave-v3/account/{checksumAddress}/{chainId}/{version}
+GET https://ai.defisaver.com/api/v1/aave-v3/account/{checksumAddress}/{chainId}/v3default
 ```
 
 If `parseFloat(data.borrowedUsd) > 0` → position exists. Ask:
@@ -134,7 +132,7 @@ If boost → route to boost-position. If new → continue.
 **Step 5 — Call the API**
 
 ```
-POST https://ai.defisaver.com/api/v1/aave-v3/leveraged-position/{checksumAddress}/{chainId}/{version}
+POST https://ai.defisaver.com/api/v1/aave-v3/leveraged-position/{checksumAddress}/{chainId}/v3default
 ```
 
 Body:

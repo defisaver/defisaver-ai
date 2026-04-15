@@ -13,8 +13,8 @@
       "id": 2,
       "category": "input_validation",
       "prompt": "I want to long DOGE with 2x leverage, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-      "expected_behavior": "Reject DOGE as unsupported, suggest checking DeFi Saver for supported assets",
-      "should_call_api": false
+      "expected_behavior": "Proceed to API with DOGE as collateral asset, relay API error naturally if asset is unsupported. Do not pre-reject or enumerate supported assets.",
+      "should_call_api": true
     },
     {
       "id": 3,
@@ -101,7 +101,7 @@
       "should_call_api": true,
       "expected_api_call": {
         "method": "POST",
-        "path": "/api/v1/aave-v3/leveraged-position/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/8453/AaveV3",
+        "path": "/api/v1/aave-v3/leveraged-position/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/8453/v3default",
         "body": {
           "collAsset": "ETH",
           "collAmount": "1.0",
@@ -114,11 +114,11 @@
       "id": 15,
       "category": "api_integration",
       "prompt": "long ETH 2x with 1 ETH on ethereum, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-      "expected_behavior": "Use version=AaveV3Ethereum for Ethereum mainnet",
+      "expected_behavior": "Use version=v3default for Ethereum mainnet",
       "should_call_api": true,
       "expected_api_call": {
         "method": "POST",
-        "path": "/api/v1/aave-v3/leveraged-position/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/1/AaveV3Ethereum",
+        "path": "/api/v1/aave-v3/leveraged-position/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/1/v3default",
         "body": {
           "collAsset": "ETH",
           "collAmount": "1.0",

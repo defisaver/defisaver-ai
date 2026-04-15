@@ -67,7 +67,7 @@ instead of direct RPC calls.
 ### Get Account Position
 GET https://ai.defisaver.com/api/v1/aave-v3/account/{address}/{network}/{version}
 
-Returns current position: healthFactor, LTV, collateral, debt.
+Returns current position: healthRatio, LTV, collateral, debt.
 Use before any write action to check current state.
 
 ### Get Combined Position + Market Data

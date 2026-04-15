@@ -65,7 +65,9 @@ Verified contract and token addresses for DeFi Saver plugin.
 
 | Contract | Address |
 |----------|---------|
-| Pool | `0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e` |
+| Pool | `0xc47b8C00b0f69a36fa203Ffeac0334874574a8Ac` |
+| PoolAddressesProvider | `0x89502c3731F69DDC95B65753708A07F8Cd0373F4` |
+| PoolDataProvider | `0x47cd4b507B81cB831669c71c7077f4daF6762FF4` |
 
 ## Token Addresses
 
@@ -119,9 +121,10 @@ Verified contract and token addresses for DeFi Saver plugin.
 |-------|---------|----------|
 | ETH (native) | `0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE` | 18 |
 | WETH | `0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34` | 18 |
+| wstETH | `0xB5beDd42000b71FddE22D3eE8a79Bd49A568fC8F` | 18 |
+| WBTC | `0x3aAB2285ddcDdaD8edf438C1bAB47e1a9D05a9b4` | 8 |
 | USDC | `0x176211869cA2b568f2A7D4EE941E073a821EE1ff` | 6 |
 | USDT | `0xA219439258ca9da29E9Cc4cE5596924745e12B93` | 6 |
-| DAI | `0x4AF15ec2A0BD43Db75dd04E62FAA3B8EF36b00d8` | 18 |
 
 ## Verification
 
