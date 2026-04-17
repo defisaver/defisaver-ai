@@ -1,0 +1,142 @@
+{
+  "skill_name": "repay-position",
+  "description": "Evals for repay-position skill",
+  "evals": [
+    {
+      "id": 1,
+      "category": "input_validation",
+      "prompt": "repay my loan, wallet 0xinvalidaddress",
+      "expected_behavior": "Reject with invalid address error, ask for valid address",
+      "should_call_api": false
+    },
+    {
+      "id": 2,
+      "category": "missing_params",
+      "prompt": "repay my loan",
+      "expected_behavior": "Ask for wallet address before proceeding",
+      "should_call_api": false
+    },
+    {
+      "id": 3,
+      "category": "missing_params",
+      "prompt": "repay my debt, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Fetch existing position, then ask how much to repay — amount, target health ratio, or percentage",
+      "should_call_api": false
+    },
+    {
+      "id": 4,
+      "category": "no_position",
+      "prompt": "repay my loan, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Fetch position, if no open position (borrowedUsd=0) inform user and offer to create one",
+      "should_call_api": true
+    },
+    {
+      "id": 5,
+      "category": "routing",
+      "prompt": "close my position entirely, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Route to close-position skill, not repay-position",
+      "should_call_api": false
+    },
+    {
+      "id": 6,
+      "category": "routing",
+      "prompt": "I want more leverage, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Route to boost-position skill",
+      "should_call_api": false
+    },
+    {
+      "id": 7,
+      "category": "natural_language",
+      "prompt": "my health ratio is at 1.35, I'm scared of liquidation, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Recognize liquidation risk intent, fetch position, show current state, suggest a repay amount to reach safe health ratio (2.0+)",
+      "should_call_api": true
+    },
+    {
+      "id": 8,
+      "category": "natural_language",
+      "prompt": "take some risk off my position, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Recognize as repay/deleverage intent, ask for target or amount",
+      "should_call_api": false
+    },
+    {
+      "id": 9,
+      "category": "natural_language",
+      "prompt": "reduce my leverage from 3x to 2x, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Map leverage reduction to targetExposure=2, call repay API",
+      "should_call_api": true,
+      "expected_api_call": {
+        "method": "POST",
+        "path": "/api/v1/aave-v3/repay/prepare/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/1/v3default",
+        "body": {
+          "targetExposure": 2,
+          "slippagePercent": 0.5
+        }
+      }
+    },
+    {
+      "id": 10,
+      "category": "api_integration",
+      "prompt": "get my health ratio to 2.0, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Map to targetHealthRatio=2.0, call repay API on default network (ethereum)",
+      "should_call_api": true,
+      "expected_api_call": {
+        "method": "POST",
+        "path": "/api/v1/aave-v3/repay/prepare/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/1/v3default",
+        "body": {
+          "targetHealthRatio": 2.0,
+          "slippagePercent": 0.5
+        }
+      }
+    },
+    {
+      "id": 11,
+      "category": "api_integration",
+      "prompt": "repay my debt on base to reach health ratio 2.5, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Use network=8453 (base), call repay API with targetHealthRatio=2.5",
+      "should_call_api": true,
+      "expected_api_call": {
+        "method": "POST",
+        "path": "/api/v1/aave-v3/repay/prepare/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/8453/v3default",
+        "body": {
+          "targetHealthRatio": 2.5,
+          "slippagePercent": 0.5
+        }
+      }
+    },
+    {
+      "id": 12,
+      "category": "network",
+      "prompt": "repay my loan on polygon, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Reject polygon as unsupported, list the five supported networks",
+      "should_call_api": false
+    },
+    {
+      "id": 13,
+      "category": "safety",
+      "prompt": "repay $500 of my debt, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Show repay preview with afterPositionData, warn if health ratio after repay is still below 1.5, ask for confirmation before returning steps",
+      "should_call_api": true
+    },
+    {
+      "id": 14,
+      "category": "safety",
+      "prompt": "my health ratio is already 3.0, should I repay? wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Fetch position, confirm health ratio is comfortable, ask if user really wants to repay before proceeding",
+      "should_call_api": true
+    },
+    {
+      "id": 15,
+      "category": "simulation",
+      "prompt": "show me what happens if I repay half my debt, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Run full flow through preview, show confirmation display, ask would you like to proceed",
+      "should_call_api": true
+    },
+    {
+      "id": 16,
+      "category": "api_flow",
+      "prompt": "bring my health ratio to 2.0 on arbitrum, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "1. Validate address 2. Fetch existing position 3. POST repay prepare with targetHealthRatio=2.0 4. Fetch gas price 5. Show preview 6. Wait for confirmation 7. Return steps",
+      "should_call_api": true
+    }
+  ]
+}
