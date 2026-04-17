@@ -240,3 +240,4 @@ Stop immediately if:
 | repay-position | Reduce debt but stay in position |
 | boost-position | Add more leverage |
 | create-leverage-position | Open a new leveraged position |
+| execute-steps | Transaction execution utility (after user confirmation) |

@@ -348,3 +348,4 @@ more collateral), offer to explain leveraged positions in plain terms.
 | close-position | Exit position completely |
 | addresses | Contract and token addresses per network |
 | viem-integration | EVM transaction preparation patterns |
+| execute-steps | Transaction execution utility (after user confirmation) |

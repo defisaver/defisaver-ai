@@ -242,3 +242,4 @@ Stop immediately if:
 | close-position | Exit position completely |
 | boost-position | Add more leverage to existing position |
 | create-leverage-position | Open a new leveraged position |
+| execute-steps | Transaction execution utility (after user confirmation) |

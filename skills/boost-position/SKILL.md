@@ -234,3 +234,4 @@ Stop immediately if:
 | create-leverage-position | No position yet, open a new one |
 | repay-position | Reduce debt or risk |
 | close-position | Exit position completely |
+| execute-steps | Transaction execution utility (after user confirmation) |
