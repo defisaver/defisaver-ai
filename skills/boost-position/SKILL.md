@@ -29,6 +29,9 @@ Increases leverage on an existing position by borrowing more against current
 collateral and using a flashloan to buy more of the collateral asset.
 Returns unsigned transaction data — never executes automatically.
 
+See [API reference](./references/api.md) for endpoints, request/response fields,
+and error codes.
+
 ## Quick Decision Guide
 
 | User wants to... | Action |
@@ -106,28 +109,40 @@ Current `healthRatio` from Step 3:
 
 **Step 5 — Call the API**
 
-> **TODO:** Endpoint and request body to be confirmed with backend documentation.
-
 ```
-POST https://ai.defisaver.com/api/v1/aave-v3/[TBD]/{checksumAddress}/{chainId}/{version}
+POST https://ai.defisaver.com/api/v1/aave-v3/boost/prepare/{checksumAddress}/{chainId}/v3default
 ```
 
-Body:
+Map user intent to request body — include only the relevant target field:
+
 ```json
 {
-  "TODO": "fields TBD"
+  "targetExposure": "<float, e.g. 3.0>",
+  "slippagePercent": 0.5
 }
 ```
+
+| Field | Type | When to use |
+|-------|------|-------------|
+| targetHealthRatio | number | User gives a target health ratio (e.g. "get me to 1.8") |
+| targetCollRatio | number | User gives a target collateral ratio |
+| targetSafetyRatio | number | User gives a target safety ratio |
+| targetExposure | number | User gives a target leverage (e.g. "increase to 3x") |
+| slippagePercent | number | Default: 0.5. Acceptable price slippage % |
+
+Only one target field is needed — use whichever maps best to user intent.
+See [api.md](./references/api.md) for full request/response details.
 
 **Step 6 — Validate response**
 
 If `response.success` is false → relay error in plain language.
 
 If `response.success` is true:
-- `response.data.txs` must not be empty
+- `response.data.steps` must not be empty
 - Parse `response.data.afterPositionData.healthRatio` as float
 - `healthRatio` must be above 1.3 — if not, ABORT
 - `healthRatio` must be above `minHealthRatio`
+- Each step must have a non-empty `txDataApiEndpoint` and `type` field
 
 **Step 7 — Show confirmation preview**
 
@@ -163,13 +178,14 @@ Ask: "Shall I prepare the transactions for signing?"
 
 **Step 8 — Return transaction data**
 
-Map `response.data.txs`:
+Map `response.data.steps` to output format:
 
-| API type | Output type | raw_tx fields |
-|----------|-------------|---------------|
-| SafeTx (first, if ERC20) | `"approval"` | `{ chain_id, to, value, data }` |
-| SafeTx (main action) | `"action"` | `{ chain_id, to, value, data }` |
-| TypedSignature | `"typed_signature"` | `{ domain, types, message }` |
+| Step Field | Maps To |
+|------------|--------|
+| step.type | Transaction type: "SafeTx" → "action", "TypedSignature" → "typed_signature" |
+| step.name | Transaction name |
+| step.description | Transaction description |
+| step.txDataApiEndpoint | API endpoint to call for transaction data |
 
 Return:
 ```json
@@ -198,7 +214,7 @@ Stop immediately if:
 - No existing position found
 - Current healthRatio below 1.3
 - Post-boost healthRatio below 1.3 or below minHealthRatio
-- `txs` array is empty after successful API response
+- `steps` array is empty after successful API response
 
 ## Triggers — User Story Scenarios
 
