@@ -132,7 +132,7 @@ If boost → route to boost-position. If new → continue.
 **Step 5 — Call the API**
 
 ```
-POST https://ai.defisaver.com/api/v1/aave-v3/leveraged-position/{checksumAddress}/{chainId}/v3default
+POST https://ai.defisaver.com/api/v1/aave-v3/create/prepare/{checksumAddress}/{chainId}/v3default
 ```
 
 Body:
@@ -152,11 +152,11 @@ Body:
 If `response.success` is false → handle error per [Error Handling](./references/api.md#error-handling).
 
 If `response.success` is true, check before showing preview:
-- `response.data.txs` must not be empty
+- `response.data.steps` must not be empty
 - Parse `response.data.afterPositionData.healthRatio` as float
 - `healthRatio` must be above 1.3 — if not, ABORT
 - `healthRatio` must be above `response.data.afterPositionData.minHealthRatio`
-- Each SafeTx in `txs` must have a non-empty `data` field
+- Each step in `steps` must have a non-empty `txDataApiEndpoint` and `type` field
 
 **Step 7 — Show confirmation preview**
 
@@ -173,20 +173,22 @@ Open Leverage Position — DeFi Saver
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Collateral:       <afterPositionData.suppliedUsd> USD
 Debt:             <afterPositionData.borrowedUsd> USD
-Leverage:         <leverage>x
+Leverage:         <afterPositionData.exposure>x
 Network:          <network>
 Gas Price:        <gasPriceFormatted>
 Flashloan:        <flashloanInfo.protocol> (fee: <flashloanInfo.flFee>)
+Service Fee:      <feePercent>%
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 After transaction:
 Health Ratio:     <afterPositionData.healthRatio> <indicator>
 Coll. Ratio:      <afterPositionData.collRatio>%
+Safety Ratio:     <afterPositionData.ratio>%
 Liq. Risk:        <afterPositionData.liqPercent>%
 Net APY:          <afterPositionData.netApy>%
 Est. Interest:    <afterPositionData.totalInterestUsd> USD/year
 Liq. Price:       <afterPositionData.liquidationPrice, if not empty>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Transactions:     <txs.length>
+Steps:     <steps.length>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -201,12 +203,12 @@ If `netApy` is negative:
 > "Note: Net APY is <netApy>% — borrowing costs exceed yield.
 > This position profits only if <asset> price increases."
 
-If `txs.length > 1`, explain before asking:
+If `steps.length > 1`, explain before asking:
 > "This requires <n> steps — sign and submit in order."
 >
-> Transaction types:
-> - ERC20 collateral: first transaction is a token approval, second is the main action
-> - ETH collateral: single transaction
+> Step types:
+> - ERC20 collateral: first step is a token approval, second is the main action
+> - ETH collateral: single step
 > - TypedSignature: off-chain signature only, no gas required
 
 If position is large (`suppliedUsd > $10,000`):
@@ -217,13 +219,19 @@ Ask: "Shall I prepare the transactions for signing?"
 
 **Step 8 — Return transaction data**
 
-Map `response.data.txs` to output format:
+Map `response.data.steps` to output format:
 
-| API type | Output type | raw_tx fields |
-|----------|-------------|---------------|
-| SafeTx (first, if ERC20 collateral) | `"approval"` | `{ chain_id, to, value, data }` |
-| SafeTx (main action or ETH collateral) | `"action"` | `{ chain_id, to, value, data }` |
-| TypedSignature | `"typed_signature"` | `{ domain, types, message }` |
+| Step Field | Maps To | Description |
+|------------|---------|-------------|
+| step.type | Output transaction type | "SafeTx" → "action" or "approval", "TypedSignature" → "typed_signature" |
+| step.name | Transaction name | Human-readable transaction identifier |
+| step.description | Transaction description | What the transaction does |
+| step.txDataApiEndpoint | API endpoint | Endpoint to call for transaction data |
+
+Transaction type mapping:
+- SafeTx (first, if ERC20 collateral) → `"approval"`
+- SafeTx (main action or ETH collateral) → `"action"`
+- TypedSignature → `"typed_signature"`
 
 ETH collateral → 1 SafeTx → type `"action"`.
 ERC20 collateral → 2 SafeTx → first is `"approval"`, second is `"action"`.
@@ -247,14 +255,15 @@ Return:
   "summary": {
     "suppliedUsd": "<afterPositionData.suppliedUsd>",
     "borrowedUsd": "<afterPositionData.borrowedUsd>",
-    "exposure": "<afterPositionData.exposure>",
-    "leverage": "<leverage>x",
+    "leverage": "<afterPositionData.exposure>x",
     "healthRatio": "<afterPositionData.healthRatio>",
     "collRatio": "<afterPositionData.collRatio>",
+    "safetyRatio": "<afterPositionData.ratio>",
     "liqPercent": "<afterPositionData.liqPercent>",
     "netApy": "<afterPositionData.netApy>",
     "flashloanProtocol": "<flashloanInfo.protocol>",
-    "flashloanFee": "<flashloanInfo.flFee>"
+    "flashloanFee": "<flashloanInfo.flFee>",
+    "serviceFee": "<feePercent>%"
   }
 }
 ```
@@ -270,7 +279,7 @@ After returning, always add:
 Stop immediately and explain why if:
 - `healthRatio` below 1.3 after API call
 - `healthRatio` below `minHealthRatio`
-- `txs` array is empty after a successful API response
+- `steps` array is empty after a successful API response
 - User input is still ambiguous after two clarification attempts
 - User seems unsure or unfamiliar with leverage risks
 

@@ -6,21 +6,21 @@ POST https://ai.defisaver.com/api/v1/aave-v3/create/prepare/:address/:network/:v
 
 ### URL Parameters
 
-| Param | Description | Example |
-|-------|-------------|---------|
+| Param   | Description                | Example       |
+| ------- | -------------------------- | ------------- |
 | address | Checksummed wallet address | `0x742d35...` |
-| network | Chain ID as integer | `8453` |
-| version | AaveVersions enum value | `v3default` |
+| network | Chain ID as integer        | `8453`        |
+| version | AaveVersions enum value    | `v3default`   |
 
 ### Network to Version Mapping
 
-| Network | Chain ID | version param |
-|---------|----------|---------------|
-| Ethereum | 1 | v3default |
-| Optimism | 10 | v3default |
-| Base | 8453 | v3default |
-| Arbitrum | 42161 | v3default |
-| Linea | 59144 | v3default |
+| Network  | Chain ID | version param |
+| -------- | -------- | ------------- |
+| Ethereum | 1        | v3default     |
+| Optimism | 10       | v3default     |
+| Base     | 8453     | v3default     |
+| Arbitrum | 42161    | v3default     |
+| Linea    | 59144    | v3default     |
 
 ### Request Body
 
@@ -33,12 +33,12 @@ POST https://ai.defisaver.com/api/v1/aave-v3/create/prepare/:address/:network/:v
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| collAsset | string | Collateral asset symbol (e.g. "ETH") |
-| collAmount | string | Collateral amount as decimal string |
-| debtAsset | string | Borrow asset symbol (e.g. "USDC") |
-| exposure | string | Leverage multiplier as string (e.g. "2" for 2x) |
+| Field      | Type   | Description                                     |
+| ---------- | ------ | ----------------------------------------------- |
+| collAsset  | string | Collateral asset symbol (e.g. "ETH")            |
+| collAmount | string | Collateral amount as decimal string             |
+| debtAsset  | string | Borrow asset symbol (e.g. "USDC")               |
+| exposure   | string | Leverage multiplier as string (e.g. "2" for 2x) |
 
 Note: `exposure` is the leverage multiplier — "2" means 2x leverage.
 `collAmount` and `exposure` must be strings that parse to valid numbers.
@@ -68,12 +68,19 @@ Note: `exposure` is the leverage multiplier — "2" means 2x leverage.
       "liquidationLimitUsd": "19.517544438073805825433057712815",
       "borrowedUsd": "14.998499999999999016179499",
       "leftToBorrowUsd": "3.7683696519940450467369026469375",
+      "ratio": "125.1249768443113997661204501301857",
+      "collRatio": "166.8333024590818663548272668402476",
+      "liqRatio": "0.9615384615384615384615384615384615",
+      "liqPercent": "96.15384615384615384615384615384615",
+      "leveragedType": "short",
+      "leveragedAsset": "ETH",
+      "liquidationPrice": "3049.702052475560379937662934863397",
+      "minCollRatio": "133.3333333333333333333333333333333",
+      "collLiquidationRatio": "128.2051282051282051282051282051282",
       "healthRatio": "1.3012",
       "minHealthRatio": "1.04",
-      "collRatio": "166.8333024590818663548272668402476",
-      "liqPercent": "96.15384615384615384615384615384615",
-      "liquidationPrice": "3049.702052475560379937662934863397",
       "netApy": "2.794610848196383428916865304021716",
+      "incentiveUsd": "0",
       "totalInterestUsd": "0.28013159214859936",
       "exposure": "2.49"
     },
@@ -92,35 +99,76 @@ Note: `exposure` is the leverage multiplier — "2" means 2x leverage.
         "symbol": "USDC",
         "isSupplied": true,
         "collateral": true,
+        "borrowRate": "3.50865179579679332645117359850930",
         "supplyRate": "2.49222719058699435499909605328950"
       }
     },
-    "txs": [
-      {
-        "name": "Approval",
-        "description": "Approve USDC for spending by the safe wallet",
-        "type": "SafeTx",
-        "to": "0xA0b86a33E6441e8C533B126bE2E2d13b78DE13b6",
-        "value": "0",
-        "data": "0x095ea7b3000000000000000000000000..."
-      },
-      {
-        "name": "Aave V3 leveraged position creation",
-        "description": "Create a 2x leveraged position on Aave V3",
-        "type": "SafeTx",
-        "to": "0x21dC459fbA0B1Ea037Cd221D35b928Be1C26141a",
-        "value": "0",
-        "data": "0x84bb1e42000000000000000000000000..."
-      }
-    ],
+    "success": true,
+    "price": "2347.72152615",
+    "address": "0x21dC459fbA0B1Ea037Cd221D35b928Be1C26141a",
+    "network": 1,
     "flashloanInfo": {
       "protocol": "morpho",
       "feeMultiplier": "1",
       "flFee": "0"
     },
-    "price": "2347.72152615",
-    "address": "0x21dC459fbA0B1Ea037Cd221D35b928Be1C26141a",
-    "network": 1,
+    "steps": [
+      {
+        "name": "Approval",
+        "description": "Approve USDC for spending by the safe wallet",
+        "type": "SafeTx",
+        "txDataApiEndpoint": "/approval/asset",
+        "bodyParams": {
+          "asset": "USDC",
+          "amount": "10",
+          "address": "0x21dC459fbA0B1Ea037Cd221D35b928Be1C26141a",
+          "spender": "0x9768F31bd299fA1cA98EDd7Aa15Fc84d94C33f7C",
+          "network": 1
+        }
+      },
+      {
+        "name": "Delegate signature",
+        "description": "Get delegate signature for ETH for spending by the safe wallet",
+        "type": "TypedSignature",
+        "txDataApiEndpoint": "/aave-v3/delegate-signature",
+        "bodyParams": {
+          "signAsset": "ETH",
+          "signAmount": "0.006345995613530038",
+          "address": "0x21dC459fbA0B1Ea037Cd221D35b928Be1C26141a",
+          "proxyForExecution": "0x9768F31bd299fA1cA98EDd7Aa15Fc84d94C33f7C",
+          "vTokenAddress": "0xeA51d7853EEFb32b6ee06b1C12E6dcCA88Be0fFE",
+          "network": 1
+        }
+      },
+      {
+        "name": "Aave V3 leveraged position creation",
+        "description": "Create a 2.5x USDC/ETH leveraged position on Aave V3",
+        "type": "SafeTx",
+        "txDataApiEndpoint": "/aave-v3/create/execute-recipe",
+        "bodyParams": {
+          "network": 1,
+          "address": "0x21dC459fbA0B1Ea037Cd221D35b928Be1C26141a",
+          "proxyForExecution": "0x9768F31bd299fA1cA98EDd7Aa15Fc84d94C33f7C",
+          "version": "v3default",
+          "collAsset": "USDC",
+          "collAmount": "10",
+          "collAssetId": "3",
+          "debtAsset": "ETH",
+          "debtAmount": "0.006345995613530038",
+          "debtAssetId": "0",
+          "vTokenAddress": "0xeA51d7853EEFb32b6ee06b1C12E6dcCA88Be0fFE",
+          "eModeCategory": 0,
+          "enableEmode": false,
+          "minPrice": "2354.943356325",
+          "slippagePercent": 0.2,
+          "flashloanInfo": {
+            "protocol": "morpho",
+            "feeMultiplier": "1",
+            "flFee": "0"
+          }
+        }
+      }
+    ],
     "feePercent": "0.25"
   },
   "meta": {
@@ -135,13 +183,11 @@ Note: `exposure` is the leverage multiplier — "2" means 2x leverage.
 ```json
 {
   "success": false,
-  "error": "ERROR_CODE", 
+  "error": "ERROR_CODE",
   "message": "Human readable description",
   "details": {
     "field": "additional context if applicable"
   }
-}
-```
 }
 ```
 
@@ -149,65 +195,66 @@ Note: `exposure` is the leverage multiplier — "2" means 2x leverage.
 
 #### afterPositionData Fields
 
-| Field | Type | Description | Usage |
-|-------|------|-------------|-------|
-| suppliedUsd | string | Total collateral value in USD | Display to user |
-| borrowedUsd | string | Total debt value in USD | Display to user |
-| healthRatio | string | Health factor (e.g. "1.3863") | **CRITICAL** — parse as float, must be > 1.3 |
-| minHealthRatio | string | Minimum safe health ratio | Compare against healthRatio |
-| collRatio | string | Collateralization ratio % | Display as risk indicator |
-| liqPercent | string | Liquidation risk % | Higher = more risk |
-| liquidationPrice | string | Asset price at liquidation | Show if not empty |
-| netApy | string | Net APY (can be negative) | Negative means costs > yield |
-| totalInterestUsd | string | Estimated interest cost per year | Show to user |
-| exposure | string | Total asset exposure multiplier | Display to user |
+| Field            | Type   | Description                      | Usage                                        |
+| ---------------- | ------ | -------------------------------- | -------------------------------------------- |
+| suppliedUsd      | string | Total collateral value in USD    | Display to user                              |
+| borrowedUsd      | string | Total debt value in USD          | Display to user                              |
+| healthRatio      | string | Health factor (e.g. "1.3863")    | **CRITICAL** — parse as float, must be > 1.3 |
+| minHealthRatio   | string | Minimum safe health ratio        | Compare against healthRatio                  |
+| collRatio        | string | Collateralization ratio %        | Display as risk indicator                    |
+| liqPercent       | string | Liquidation risk %               | Higher = more risk                           |
+| liquidationPrice | string | Asset price at liquidation       | Show if not empty                            |
+| netApy           | string | Net APY (can be negative)        | Negative means costs > yield                 |
+| totalInterestUsd | string | Estimated interest cost per year | Show to user                                 |
+| exposure         | string | Total asset exposure multiplier  | Display to user                              |
 
 #### Health Ratio Validation Rules
 
-| Health Ratio | Status | Action |
-|-------------|---------|---------|
-| Above 2.0 | ✅ Safe | Proceed normally |
-| 1.5 to 2.0 | ⚠️ Moderate | Show warning |
-| 1.3 to 1.5 | 🔴 High risk | Strong warning + confirmation |
-| Below 1.3 | ☠️ Critical | **ABORT** — do not proceed |
+| Health Ratio | Status       | Action                        |
+| ------------ | ------------ | ----------------------------- |
+| Above 2.0    | ✅ Safe      | Proceed normally              |
+| 1.5 to 2.0   | ⚠️ Moderate  | Show warning                  |
+| 1.3 to 1.5   | 🔴 High risk | Strong warning + confirmation |
+| Below 1.3    | ☠️ Critical  | **ABORT** — do not proceed    |
 
 #### Transaction Array (txs)
 
 Execute in order. Each transaction object contains:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| name | string | Human-readable transaction name |
-| description | string | What the transaction does |
-| type | string | Always "SafeTx" for blockchain transactions |
-| to | string | Contract address to call |
-| value | string | ETH value to send (usually "0") |
-| data | string | Encoded transaction data |
+| Field       | Type   | Description                                 |
+| ----------- | ------ | ------------------------------------------- |
+| name        | string | Human-readable transaction name             |
+| description | string | What the transaction does                   |
+| type        | string | Always "SafeTx" for blockchain transactions |
+| to          | string | Contract address to call                    |
+| value       | string | ETH value to send (usually "0")             |
+| data        | string | Encoded transaction data                    |
 
 **Transaction Types by Collateral:**
+
 - **ETH collateral**: 1 transaction (main action)
 - **ERC20 collateral**: 2 transactions (approval + main action)
 
 #### flashloanInfo
 
-| Field | Description |
-|-------|-------------|
-| protocol | Flashloan provider (morpho, aave, etc.) |
-| feeMultiplier | Fee calculation multiplier |
-| flFee | Fee amount — "0" means free |
+| Field         | Description                             |
+| ------------- | --------------------------------------- |
+| protocol      | Flashloan provider (morpho, aave, etc.) |
+| feeMultiplier | Fee calculation multiplier              |
+| flFee         | Fee amount — "0" means free             |
 
 ### Error Codes
 
-| Code | Cause | Agent Action |
-|------|-------|--------------|
-| HEALTH_FACTOR_TOO_LOW | healthRatio < 1.3 after transaction | Suggest lower leverage |
-| INSUFFICIENT_COLLATERAL | Not enough balance | Show required amount |
-| LEVERAGE_EXCEEDS_MAX | Requested > 3x | Suggest maximum 3x |
-| UNSUPPORTED_ASSET | Asset not available on protocol | List supported assets |
-| UNSUPPORTED_NETWORK | Network not supported | List supported networks |
-| INVALID_ADDRESS | Malformed wallet address | Ask user to verify address |
-| SIMULATION_FAILED | Transaction would revert | Explain failure reason |
-| API_TIMEOUT | Service temporarily unavailable | Retry once, then report |
+| Code                    | Cause                               | Agent Action               |
+| ----------------------- | ----------------------------------- | -------------------------- |
+| HEALTH_FACTOR_TOO_LOW   | healthRatio < 1.3 after transaction | Suggest lower leverage     |
+| INSUFFICIENT_COLLATERAL | Not enough balance                  | Show required amount       |
+| LEVERAGE_EXCEEDS_MAX    | Requested > 3x                      | Suggest maximum 3x         |
+| UNSUPPORTED_ASSET       | Asset not available on protocol     | List supported assets      |
+| UNSUPPORTED_NETWORK     | Network not supported               | List supported networks    |
+| INVALID_ADDRESS         | Malformed wallet address            | Ask user to verify address |
+| SIMULATION_FAILED       | Transaction would revert            | Explain failure reason     |
+| API_TIMEOUT             | Service temporarily unavailable     | Retry once, then report    |
 
 ## Validation Requirements
 
@@ -236,13 +283,14 @@ GET https://ai.defisaver.com/api/v1/utils/validate-address/:address
 ```
 
 Response:
+
 ```json
 {
   "success": true,
-  "data": { 
-    "address": "0x...", 
-    "isValid": true, 
-    "checksumAddress": "0x742d35..." 
+  "data": {
+    "address": "0x...",
+    "isValid": true,
+    "checksumAddress": "0x742d35..."
   }
 }
 ```
@@ -265,11 +313,12 @@ GET https://ai.defisaver.com/api/v1/utils/gas-price/:chainId
 ```
 
 Response:
+
 ```json
-{ 
-  "chainId": 8453, 
-  "chainName": "Base", 
-  "gasPrice": "...", 
-  "gasPriceFormatted": "0.01 gwei" 
+{
+  "chainId": 8453,
+  "chainName": "Base",
+  "gasPrice": "...",
+  "gasPriceFormatted": "0.01 gwei"
 }
 ```
