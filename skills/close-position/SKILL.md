@@ -30,6 +30,9 @@ Fully exits a leveraged position by repaying all debt and withdrawing all
 collateral via a flashloan in a single transaction. Returns unsigned
 transaction data — never executes automatically.
 
+See [API reference](./references/api.md) for endpoints, request/response fields,
+and error codes.
+
 ## Quick Decision Guide
 
 | User wants to... | Action |
@@ -109,26 +112,31 @@ preview without final confirmation until they explicitly confirm.
 
 **Step 5 — Call the API**
 
-> **TODO:** Endpoint and request body to be confirmed with backend documentation.
-
 ```
-POST https://ai.defisaver.com/api/v1/aave-v3/[TBD]/{checksumAddress}/{chainId}/{version}
+POST https://ai.defisaver.com/api/v1/aave-v3/close/prepare/{checksumAddress}/{chainId}/v3default
 ```
 
 Body:
 ```json
 {
-  "TODO": "fields TBD"
+  "slippagePercent": 1
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| slippagePercent | number | Acceptable price slippage %. Default: 1 |
+
+See [api.md](./references/api.md) for full request/response details.
 
 **Step 6 — Validate response**
 
 If `response.success` is false → relay error in plain language.
 
 If `response.success` is true:
-- `response.data.txs` must not be empty
-- Each SafeTx in `txs` must have a non-empty `data` field
+- `response.data.steps` must not be empty
+- Each step must have a non-empty `txDataApiEndpoint` and `type` field
+- Note: `afterPositionData` fields will be "0" or "NaN" — this is expected for a closed position
 
 **Step 7 — Show confirmation preview**
 
@@ -152,7 +160,7 @@ After closing:
 Debt:             $0
 Health Ratio:     N/A (position closed)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Transactions:     <txs.length>
+Steps:            <steps.length>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -163,13 +171,14 @@ Ask: "Shall I prepare the transactions for signing?"
 
 **Step 8 — Return transaction data**
 
-Map `response.data.txs`:
+Map `response.data.steps` to output format:
 
-| API type | Output type | raw_tx fields |
-|----------|-------------|---------------|
-| SafeTx (first, if ERC20) | `"approval"` | `{ chain_id, to, value, data }` |
-| SafeTx (main action) | `"action"` | `{ chain_id, to, value, data }` |
-| TypedSignature | `"typed_signature"` | `{ domain, types, message }` |
+| Step Field | Maps To |
+|------------|--------|
+| step.type | Transaction type: "SafeTx" → "action", "TypedSignature" → "typed_signature" |
+| step.name | Transaction name |
+| step.description | Transaction description |
+| step.txDataApiEndpoint | API endpoint to call for transaction data |
 
 Return:
 ```json
@@ -195,7 +204,7 @@ After returning, always add:
 Stop immediately if:
 - No existing position found
 - User is unsure — offer repay-position as a partial alternative
-- `txs` array is empty after successful API response
+- `steps` array is empty after successful API response
 
 ## Triggers — User Story Scenarios
 

@@ -1,0 +1,146 @@
+{
+  "skill_name": "close-position",
+  "description": "Evals for close-position skill",
+  "evals": [
+    {
+      "id": 1,
+      "category": "input_validation",
+      "prompt": "close my position, wallet 0xinvalidaddress",
+      "expected_behavior": "Reject with invalid address error, ask for valid address",
+      "should_call_api": false
+    },
+    {
+      "id": 2,
+      "category": "missing_params",
+      "prompt": "close my position",
+      "expected_behavior": "Ask for wallet address before proceeding",
+      "should_call_api": false
+    },
+    {
+      "id": 3,
+      "category": "no_position",
+      "prompt": "close my position, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Fetch position, if no open position (borrowedUsd=0) inform user there is nothing to close",
+      "should_call_api": true
+    },
+    {
+      "id": 4,
+      "category": "routing",
+      "prompt": "open a new leveraged position, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Route to create-leverage-position skill",
+      "should_call_api": false
+    },
+    {
+      "id": 5,
+      "category": "routing",
+      "prompt": "reduce my debt a bit, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Route to repay-position skill — user wants partial reduction, not full close",
+      "should_call_api": false
+    },
+    {
+      "id": 6,
+      "category": "routing",
+      "prompt": "lower my leverage to 2x, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Route to repay-position skill — user wants to reduce leverage, not fully close",
+      "should_call_api": false
+    },
+    {
+      "id": 7,
+      "category": "routing",
+      "prompt": "increase my leverage, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Route to boost-position skill",
+      "should_call_api": false
+    },
+    {
+      "id": 8,
+      "category": "confirmation",
+      "prompt": "exit my ETH long, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Show current position details, confirm full exit explicitly before proceeding",
+      "should_call_api": true
+    },
+    {
+      "id": 9,
+      "category": "natural_language",
+      "prompt": "I'm bearish now, get me out of my position, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Recognize as close intent, fetch position, show preview, ask to confirm",
+      "should_call_api": true
+    },
+    {
+      "id": 10,
+      "category": "natural_language",
+      "prompt": "ETH pumped, I want to take profits and close, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Recognize as close intent, fetch position, show close preview with estimated return, ask to confirm",
+      "should_call_api": true
+    },
+    {
+      "id": 11,
+      "category": "natural_language",
+      "prompt": "my health ratio is too low, just close it all, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Recognize as full close intent, note that low health ratio may reduce returned collateral, proceed with close flow",
+      "should_call_api": true
+    },
+    {
+      "id": 12,
+      "category": "natural_language",
+      "prompt": "I can't monitor my position, close it, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Recognize as close intent, proceed with close flow, confirm with user",
+      "should_call_api": true
+    },
+    {
+      "id": 13,
+      "category": "simulation",
+      "prompt": "what would I get back if I closed my position now? wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Run full flow through preview, show estimated returned collateral (suppliedUsd - borrowedUsd - fees), ask would you like to proceed",
+      "should_call_api": true
+    },
+    {
+      "id": 14,
+      "category": "api_integration",
+      "prompt": "close my position, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Call close API with default slippagePercent=1 on ethereum",
+      "should_call_api": true,
+      "expected_api_call": {
+        "method": "POST",
+        "path": "/api/v1/aave-v3/close/prepare/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/1/v3default",
+        "body": {
+          "slippagePercent": 1
+        }
+      }
+    },
+    {
+      "id": 15,
+      "category": "api_integration",
+      "prompt": "close my position on base, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Use network=8453 (base), call close API with slippagePercent=1",
+      "should_call_api": true,
+      "expected_api_call": {
+        "method": "POST",
+        "path": "/api/v1/aave-v3/close/prepare/0x742d35Cc6634C0532925a3b844Bc454e4438f44e/8453/v3default",
+        "body": {
+          "slippagePercent": 1
+        }
+      }
+    },
+    {
+      "id": 16,
+      "category": "network",
+      "prompt": "close my position on polygon, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Reject polygon as unsupported, list the five supported networks",
+      "should_call_api": false
+    },
+    {
+      "id": 17,
+      "category": "after_position_data",
+      "prompt": "close my position, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "After API response, do NOT fail validation on afterPositionData having healthRatio=NaN or suppliedUsd=0 — this is expected for a closed position",
+      "should_call_api": true
+    },
+    {
+      "id": 18,
+      "category": "api_flow",
+      "prompt": "exit my long ETH position on arbitrum, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "1. Validate address 2. Fetch existing position 3. Show current position and confirm full exit 4. POST close prepare with slippagePercent=1 5. Fetch gas price 6. Show preview with estimated return 7. Wait for confirmation 8. Return steps",
+      "should_call_api": true
+    }
+  ]
+}
