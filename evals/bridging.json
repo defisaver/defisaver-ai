@@ -1,0 +1,62 @@
+{
+  "skill_name": "bridging",
+  "description": "Evals for bridging skill",
+  "evals": [
+    {
+      "id": 1,
+      "category": "missing_params",
+      "prompt": "bridge 100 USDC to Base",
+      "expected_behavior": "Ask for source chain and wallet address before quoting",
+      "should_call_api": false
+    },
+    {
+      "id": 2,
+      "category": "simple_bridge",
+      "prompt": "bridge 100 USDC from Ethereum to Base, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Resolve chains and tokens through LI.FI MCP, convert 100 USDC to smallest units, call get-quote, check allowance, show preview, then return unsigned transactions",
+      "should_call_api": true
+    },
+    {
+      "id": 3,
+      "category": "bridge_and_swap",
+      "prompt": "move 1 ETH from Arbitrum to Base and receive USDC, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Use get-token for ETH on Arbitrum and USDC on Base, call get-quote, and present a bridge+swap preview",
+      "should_call_api": true
+    },
+    {
+      "id": 4,
+      "category": "route_comparison",
+      "prompt": "what is the cheapest bridge for 1000 USDC from Ethereum to Arbitrum, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Map user intent to CHEAPEST and either compare routes or request a cheapest quote before previewing the result",
+      "should_call_api": true
+    },
+    {
+      "id": 5,
+      "category": "provider_preference",
+      "prompt": "bridge 250 USDC from Ethereum to Base using Across, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Call get-tools first to resolve the provider key for Across, then quote with a matching bridge filter",
+      "should_call_api": true
+    },
+    {
+      "id": 6,
+      "category": "approval_handling",
+      "prompt": "bridge 50 USDC from Base to Optimism, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "After quoting, call get-allowance with estimate.approvalAddress and include an approval transaction if allowance is insufficient",
+      "should_call_api": true
+    },
+    {
+      "id": 7,
+      "category": "native_token",
+      "prompt": "bridge 0.25 ETH from Base to Arbitrum, wallet 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "expected_behavior": "Skip approval because the source token is native, then return only the main LI.FI action transaction",
+      "should_call_api": true
+    },
+    {
+      "id": 8,
+      "category": "status_tracking",
+      "prompt": "check my bridge status, tx 0x1695bded7c1634dce4a200bdec72be0ed6cc5f7153ec2dc832b271d790eb00c8, from ethereum to arbitrum",
+      "expected_behavior": "Call get-status and explain whether the transfer is pending, completed, partial, refunded, or failed",
+      "should_call_api": true
+    }
+  ]
+}

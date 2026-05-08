@@ -24,6 +24,9 @@ skills/
   addresses/SKILL.md              # Contract addresses per network
   aave-v3/SKILL.md                # Lending protocol reference (internal)
   defi-saver/SKILL.md             # Master routing skill
+  bridging/
+    SKILL.md                     # Bridge and bridge+swap skill via LI.FI MCP
+    references/mcp.md            # LI.FI MCP tool and approval reference
   create-leverage-position/
     SKILL.md                     # Main skill instructions
     references/api.md            # DeFi Saver API reference for this skill
@@ -58,12 +61,13 @@ Keep SKILL.md files under 500 lines. Use `references/` for detailed docs loaded 
 
 ## Plugin Registration
 
-`plugin.json` lists skill directories. Each entry is a path to a directory containing a `SKILL.md`. New skills must be added here to be included in the plugin.
+`plugin.json` lists skill directories. Each entry is a path to a directory containing a `SKILL.md`. New skills must be added here to be included in the plugin. If the manifest is restored in the worktree, add `./skills/bridging/` and the LI.FI MCP server there as well.
 
 ## How Skills Interrelate
 
 - `viem-integration` is a dependency skill — other skills reference it for EVM primitives
 - `defi-saver` is the master routing skill — handles intent detection and routes to the right sub-skill
+- `bridging` uses LI.FI MCP to prepare bridge and bridge+swap transactions
 - `create-leverage-position` calls the DeFi Saver API (documented in `references/api.md`) and returns unsigned calldata
 - The agent never executes transactions; it returns calldata for the user to sign
 

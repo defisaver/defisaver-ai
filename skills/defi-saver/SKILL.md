@@ -1,10 +1,11 @@
 ---
 name: defi-saver
 description: >
-  Master routing skill for DeFi Saver leveraged positions.
+  Master routing skill for DeFi Saver leverage actions and bridging.
   Use when user wants to manage leverage: open, boost, repay, or close
-  a position. Also handles market data questions and best opportunity
-  requests. Routes to the correct sub-skill based on user intent.
+  a position. Also handles bridge requests, market data questions, and
+  best opportunity requests. Routes to the correct sub-skill based on
+  user intent.
 allowed-tools: WebFetch, Read
 license: MIT
 metadata:
@@ -15,7 +16,8 @@ metadata:
 # DeFi Saver — Master Routing Skill
 
 Routes user intent to the correct sub-skill for managing leveraged
-positions via DeFi Saver. Handles market data queries via DefiLlama MCP.
+positions via DeFi Saver. Handles market data queries via DefiLlama MCP
+and bridge requests via LI.FI MCP.
 
 ## Quick Decision Guide
 
@@ -25,6 +27,7 @@ positions via DeFi Saver. Handles market data queries via DefiLlama MCP.
 | Increase leverage on existing position | boost-position |
 | Repay debt / reduce risk | repay-position |
 | Exit position completely | close-position |
+| Bridge or move assets across chains | bridging |
 | Best opportunity / market data | DefiLlama MCP → then route |
 | Current prices / yields | DefiLlama MCP |
 
@@ -49,6 +52,12 @@ Example flow:
 4. Ask: "Which would you like to open?"
 5. Route to create-leverage-position with chosen params
 
+## Bridge Transfers (LI.FI)
+
+For bridge or bridge+swap requests, route to the `bridging` skill.
+That skill uses the LI.FI MCP server to discover routes, quote transfers,
+check allowances, and return unsigned transaction data.
+
 ## Routing Rules
 
 Always check for existing position context before routing:
@@ -57,8 +66,13 @@ Always check for existing position context before routing:
 - If user mentions "more leverage", "increase" → boost-position
 - If user mentions "repay", "reduce risk", "lower debt" → repay-position
 - If user mentions "close", "exit", "unwind" → close-position
+- If user mentions "bridge", "move to base", "send to arbitrum",
+  "transfer cross-chain", or "swap on another chain" → bridging
 
-## Supported Networks
+## DeFi Saver Supported Networks
+
+This table applies to leverage skills only. For bridge routes, resolve
+supported chains dynamically through LI.FI MCP.
 
 | Network | Chain ID | Value |
 |---------|----------|-------|
@@ -82,3 +96,4 @@ protocol availability. Do not enumerate a fixed list to users.
 - Never sign or submit transactions
 - Always show preview before returning calldata
 - Never auto-retry write actions
+- For bridging, never hardcode provider keys, token addresses, decimals, or approval spenders

@@ -10,7 +10,8 @@ npx skills add defisaver/defisaver-ai
 
 ## What This Plugin Does
 
-Manage leveraged positions via DeFi Saver using natural language.
+Manage leveraged positions via DeFi Saver and bridge assets across chains
+using natural language.
 No need to understand DeFi protocols — just describe what you want.
 
 ## Skills Included
@@ -21,6 +22,7 @@ No need to understand DeFi protocols — just describe what you want.
 | boost-position | "increase my leverage", "boost my position" |
 | repay-position | "repay my loan", "reduce my risk", "lower health risk" |
 | close-position | "close my position", "exit my long", "unwind position" |
+| bridging | "bridge 100 USDC from Ethereum to Base", "move my ETH to Arbitrum" |
 
 ## Requirements
 
@@ -58,6 +60,21 @@ All skills return unsigned transactions:
 
 Sign and submit transactions in order.
 `typed_signature` transactions require signing only (no gas).
+
+## MCP Setup For Bridging
+
+The `bridging` skill expects LI.FI MCP to be configured:
+
+```json
+{
+  "mcpServers": {
+    "lifi": {
+      "type": "http",
+      "url": "https://mcp.li.quest/mcp"
+    }
+  }
+}
+```
 
 ## Safety
 

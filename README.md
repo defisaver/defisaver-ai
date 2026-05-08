@@ -1,6 +1,6 @@
 # DeFi Saver AI Plugin
 
-Leverage management on leading DeFi lending protocols using natural language.
+Leverage management and cross-chain bridging using natural language.
 Open, boost, repay, and close leveraged positions —
 just describe what you want.
 
@@ -16,6 +16,7 @@ After installing, try these in your agent:
 "long ETH 2x with 1 ETH collateral"
 "open a leveraged ETH position"
 "I want to bet ETH price goes up"
+"bridge 100 USDC from Ethereum to Base"
 ```
 
 ## What It Does
@@ -34,11 +35,13 @@ After installing, try these in your agent:
 | boost-position | Increase leverage on existing position |
 | repay-position | Repay debt to reduce risk |
 | close-position | Exit position completely |
+| bridging | Bridge assets across chains with LI.FI quotes |
 
 ## Supported Protocols
 
 - Leading lending protocols on Ethereum, Optimism, Base, Arbitrum, and Linea
 - Flashloans via Morpho (zero fee)
+- Cross-chain bridging and bridge+swap via LI.FI MCP
 
 ## Supported Assets
 
@@ -62,6 +65,25 @@ Borrow asset: automatically selected liquid stablecoin.
 5. You confirm
 6. Plugin returns unsigned transaction data
 7. You sign and submit with your wallet
+
+For bridge requests, the plugin uses LI.FI MCP to resolve chains and tokens,
+get a route quote, check approval requirements, and return unsigned
+transactions in the same style.
+
+## MCP Setup For Bridging
+
+Configure the LI.FI MCP server in your client:
+
+```json
+{
+  "mcpServers": {
+    "lifi": {
+      "type": "http",
+      "url": "https://mcp.li.quest/mcp"
+    }
+  }
+}
+```
 
 ## Safety
 
